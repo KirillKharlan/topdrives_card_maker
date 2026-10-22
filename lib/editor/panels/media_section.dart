@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/models/media_item.dart';
 import '../../data/models/photo_transform.dart';
+import '../../logo_editor/logo_editor_screen.dart';
 import '../../ui/library/library_screen.dart';
 import '../editor_controller.dart';
 import 'section_card.dart';
@@ -44,6 +47,20 @@ class MediaSection extends StatelessWidget {
     final file = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (file == null) return;
     final item = await controller.store.logos.addFromPath(file.path);
+    controller.setLogo(item.id);
+  }
+
+  /// Opens the background remover; the result is saved as a NEW logo in the
+  /// library (the original stays untouched) and selected for this card.
+  Future<void> _removeLogoBackground(BuildContext context) async {
+    final file = controller.logoFile;
+    if (file == null) return;
+    final png = await Navigator.push<Uint8List>(
+      context,
+      MaterialPageRoute(builder: (_) => LogoEditorScreen(file: file)),
+    );
+    if (png == null) return;
+    final item = await controller.store.logos.addFromBytes(png);
     controller.setLogo(item.id);
   }
 
@@ -121,6 +138,12 @@ class MediaSection extends StatelessWidget {
                   icon: const Icon(Icons.add_photo_alternate_outlined),
                   label: const Text('From gallery'),
                 ),
+                if (hasLogo)
+                  OutlinedButton.icon(
+                    onPressed: () => _removeLogoBackground(context),
+                    icon: const Icon(Icons.auto_fix_high),
+                    label: const Text('Remove background'),
+                  ),
                 if (hasLogo)
                   OutlinedButton.icon(
                     onPressed: () => controller.setLogo(null),

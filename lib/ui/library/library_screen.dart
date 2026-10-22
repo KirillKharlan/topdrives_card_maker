@@ -16,7 +16,7 @@ class LibraryScreen extends StatelessWidget {
     required this.usageCount,
     required this.onDelete,
     this.pickMode = false,
-    this.round = false,
+    this.contain = false,
   });
 
   LibraryScreen.photos(AppStore store, {Key? key, bool pickMode = false})
@@ -37,7 +37,7 @@ class LibraryScreen extends StatelessWidget {
           usageCount: store.projects.countUsingLogo,
           onDelete: store.deleteLogo,
           pickMode: pickMode,
-          round: true,
+          contain: true,
         );
 
   final String title;
@@ -45,7 +45,7 @@ class LibraryScreen extends StatelessWidget {
   final int Function(String id) usageCount;
   final Future<void> Function(String id) onDelete;
   final bool pickMode;
-  final bool round;
+  final bool contain;
 
   Future<void> _add() async {
     final files = await ImagePicker().pickMultiImage();
@@ -95,15 +95,18 @@ class LibraryScreen extends StatelessWidget {
               final file = library.fileOf(item.id);
               final image = file == null
                   ? const SizedBox.shrink()
-                  : Image.file(file, fit: BoxFit.cover, cacheWidth: 400);
+                  : Image.file(file, fit: contain ? BoxFit.contain : BoxFit.cover, cacheWidth: 400);
               return GestureDetector(
                 onTap: pickMode ? () => Navigator.pop(context, item) : null,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    round
-                        ? ClipOval(child: image)
-                        : ClipRRect(borderRadius: BorderRadius.circular(8), child: image),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: contain
+                          ? ColoredBox(color: const Color(0xFF3A3A3A), child: image)
+                          : image,
+                    ),
                     Positioned(
                       top: 0,
                       right: 0,

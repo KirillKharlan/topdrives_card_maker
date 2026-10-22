@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 
@@ -48,6 +49,18 @@ class MediaLibrary extends ChangeNotifier {
         : '.jpg';
     final fileName = '$id$ext';
     await File(sourcePath).copy('${_dir.path}/$fileName');
+    final item = MediaItem(id: id, fileName: fileName, addedAt: DateTime.now());
+    _items.insert(0, item);
+    await _save();
+    notifyListeners();
+    return item;
+  }
+
+  /// Stores already-processed image bytes (e.g. a logo with the background removed).
+  Future<MediaItem> addFromBytes(Uint8List bytes, {String ext = '.png'}) async {
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    final fileName = '$id$ext';
+    await File('${_dir.path}/$fileName').writeAsBytes(bytes, flush: true);
     final item = MediaItem(id: id, fileName: fileName, addedAt: DateTime.now());
     _items.insert(0, item);
     await _save();

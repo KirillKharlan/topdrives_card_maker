@@ -30,9 +30,9 @@ flutter:
     - assets/tags/
   # Offline font: download Roboto Condensed from Google Fonts (SIL OFL),
   # put the files into assets/fonts/ and uncomment this block.
-  fonts:
-    - family: RobotoCondensed
-      fonts:
-        - asset: assets/fonts/RobotoCondensed-Regular.ttf
-        - asset: assets/fonts/RobotoCondensed-Bold.ttf
-          weight: 700
+  # fonts:
+  #   - family: RobotoCondensed
+  #     fonts:
+  #       - asset: assets/fonts/RobotoCondensed-Regular.ttf
+  #       - asset: assets/fonts/RobotoCondensed-Bold.ttf
+  #         weight: 700

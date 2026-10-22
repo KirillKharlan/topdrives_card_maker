@@ -76,13 +76,12 @@ class CardView extends StatelessWidget {
       top: l.cy - l.diameter / 2,
       width: l.diameter,
       height: l.diameter,
-      child: ClipOval(
-        child: Image.file(
-          logoFile!,
-          fit: BoxFit.cover,
-          cacheWidth: 512,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-        ),
+      child: Image.file(
+        logoFile!,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        cacheWidth: 512,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
       ),
     );
   }
