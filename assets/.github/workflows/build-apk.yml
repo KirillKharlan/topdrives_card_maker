@@ -1,0 +1,144 @@
+name: Build APK
+
+# A new release is built automatically:
+#  - on every push to main/master  -> version <major.minor from pubspec>.<run number>
+#  - on a pushed tag like v1.2.3   -> exactly that version
+#  - manually (Actions -> Build APK -> Run workflow) with a typed version
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - "**.md"
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.1 (without the leading v)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  # Android package name = APP_ORG + ".topdrives_card_maker".
+  # NEVER change it after the first release: a different package name means
+  # Android treats it as a different app and updates stop working.
+  APP_ORG: com.fancardmaker
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute version
+        id: ver
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION="$GITHUB_REF_NAME"
+          else
+            # push to a branch: major.minor from pubspec.yaml + run number as patch
+            BASE=$(grep -E '^version:' pubspec.yaml | head -1 | sed -E 's/^version:[[:space:]]*([0-9]+)\.([0-9]+)\..*/\1.\2/')
+            VERSION="$BASE.$RUN_NUMBER"
+          fi
+          VERSION="${VERSION#v}"
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Version must look like 1.2.3 (got '$VERSION')"
+            exit 1
+          fi
+          # versionCode must only ever grow, otherwise Android refuses the update.
+          # 1.2.3 -> 1002003, so it follows the version number itself.
+          IFS=. read -r MA MI PA <<< "$VERSION"
+          if [ "$PA" -ge 1000 ] || [ "$MI" -ge 1000 ]; then
+            echo "::error::Minor and patch must be below 1000 (got $VERSION). Raise the minor version in pubspec.yaml."
+            exit 1
+          fi
+          CODE=$((MA * 1000000 + MI * 1000 + PA))
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Building $VERSION (versionCode $CODE)"
+
+      - name: Check signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository secret $name is missing. See README, section 'Signing key'."
+              exit 1
+            fi
+          done
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Android project
+        run: |
+          flutter create --platforms=android --org "$APP_ORG" --project-name topdrives_card_maker .
+          # flutter create must not touch our own files
+          git checkout -- lib pubspec.yaml
+          python3 tool/patch_android.py
+
+      - name: Build release APK
+        run: |
+          flutter pub get
+          flutter build apk --release \
+            --build-name "${{ steps.ver.outputs.version }}" \
+            --build-number "${{ steps.ver.outputs.code }}" \
+            --dart-define=GITHUB_REPO=${{ github.repository }}
+
+      - name: Sign APK with the release key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          SRC=build/app/outputs/flutter-apk/app-release.apk
+          OUT="card-maker-v${{ steps.ver.outputs.version }}.apk"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$RUNNER_TEMP/release.jks" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --key-pass env:KEY_PASSWORD \
+            --out "$OUT" "$SRC"
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$OUT"
+          rm -f "$RUNNER_TEMP/release.jks"
+
+      - name: Save APK as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: card-maker-v${{ steps.ver.outputs.version }}
+          path: card-maker-v${{ steps.ver.outputs.version }}.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: Card Maker ${{ steps.ver.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          files: card-maker-v${{ steps.ver.outputs.version }}.apk
