@@ -1,9 +1,16 @@
 name: Build APK
 
-# Release a new version by pushing a tag:   git tag v0.1.1 && git push origin v0.1.1
-# (or run this workflow manually and type the version, e.g. 0.1.1)
+# A new release is built automatically:
+#  - on every push to main/master  -> version <major.minor from pubspec>.<run number>
+#  - on a pushed tag like v1.2.3   -> exactly that version
+#  - manually (Actions -> Build APK -> Run workflow) with a typed version
 on:
   push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - "**.md"
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -32,11 +39,16 @@ jobs:
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}
           EVENT_NAME: ${{ github.event_name }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             VERSION="$INPUT_VERSION"
-          else
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             VERSION="$GITHUB_REF_NAME"
+          else
+            # push to a branch: major.minor from pubspec.yaml + run number as patch
+            BASE=$(grep -E '^version:' pubspec.yaml | head -1 | sed -E 's/^version:[[:space:]]*([0-9]+)\.([0-9]+)\..*/\1.\2/')
+            VERSION="$BASE.$RUN_NUMBER"
           fi
           VERSION="${VERSION#v}"
           if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
@@ -46,6 +58,10 @@ jobs:
           # versionCode must only ever grow, otherwise Android refuses the update.
           # 1.2.3 -> 1002003, so it follows the version number itself.
           IFS=. read -r MA MI PA <<< "$VERSION"
+          if [ "$PA" -ge 1000 ] || [ "$MI" -ge 1000 ]; then
+            echo "::error::Minor and patch must be below 1000 (got $VERSION). Raise the minor version in pubspec.yaml."
+            exit 1
+          fi
           CODE=$((MA * 1000000 + MI * 1000 + PA))
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
@@ -115,5 +131,6 @@ jobs:
         with:
           tag_name: v${{ steps.ver.outputs.version }}
           name: Card Maker ${{ steps.ver.outputs.version }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           files: card-maker-v${{ steps.ver.outputs.version }}.apk
