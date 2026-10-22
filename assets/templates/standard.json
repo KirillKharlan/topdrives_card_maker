@@ -1,0 +1,32 @@
+{
+  "id": "standard",
+  "name": "Standard",
+  "width": 1338,
+  "height": 828,
+  "cornerRadius": 30,
+  "photoBackground": "#2B2B2B",
+  "frames": {
+    "S": "assets/frames/S.png",
+    "A": "assets/frames/A.png",
+    "B": "assets/frames/B.png",
+    "C": "assets/frames/C.png",
+    "D": "assets/frames/D.png",
+    "E": "assets/frames/E.png",
+    "F": "assets/frames/F.png"
+  },
+  "prizeBanner": "assets/overlays/prize_car.png",
+  "prizeVisibleWidth": 0.07,
+  "logo": { "cx": 69, "cy": 48, "diameter": 64 },
+  "extras": { "stripHeight": 96, "padding": 8, "gap": 16, "prizeHeight": 80, "tagHeight": 56 },
+  "fields": {
+    "title":       { "x": 154,  "y": 14,  "w": 890, "h": 68,  "size": 38,  "align": "left"   },
+    "year":        { "x": 1070, "y": 14,  "w": 112, "h": 68,  "size": 34,  "align": "right"  },
+    "country":     { "x": 1186, "y": 10,  "w": 124, "h": 76,  "size": 50,  "align": "right"  },
+    "topSpeed":    { "x": 1090, "y": 110, "w": 226, "h": 112, "size": 100, "align": "right"  },
+    "accel":       { "x": 1090, "y": 294, "w": 226, "h": 112, "size": 100, "align": "right"  },
+    "handling":    { "x": 1090, "y": 475, "w": 226, "h": 112, "size": 100, "align": "right"  },
+    "drivePrefix": { "x": 1060, "y": 660, "w": 134, "h": 110, "size": 92,  "align": "right"  },
+    "tyre":        { "x": 420,  "y": 752, "w": 505, "h": 66,  "size": 30,  "align": "right"  },
+    "rq":          { "x": 0,    "y": 652, "w": 139, "h": 100, "size": 86,  "align": "center" }
+  }
+}

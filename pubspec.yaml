@@ -1,0 +1,38 @@
+name: topdrives_card_maker
+description: Offline fan-made card maker for Top Drives.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2
+  path_provider: ^2.1.4
+  share_plus: ^10.1.2
+  gal: ^2.3.1
+  package_info_plus: ^8.0.0
+  url_launcher: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/templates/
+    - assets/frames/
+    - assets/overlays/
+    - assets/tags/
+  # Offline font: download Roboto Condensed from Google Fonts (SIL OFL),
+  # put the files into assets/fonts/ and uncomment this block.
+  # fonts:
+  #   - family: RobotoCondensed
+  #     fonts:
+  #       - asset: assets/fonts/RobotoCondensed-Regular.ttf
+  #       - asset: assets/fonts/RobotoCondensed-Bold.ttf
+  #         weight: 700

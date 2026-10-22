@@ -1,0 +1,19 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.iml
+.idea/
+.vscode/
+
+# Platform folders are generated in CI (see .github/workflows/build-apk.yml)
+/android/
+/ios/
+/test/
+
+# Never commit signing keys
+*.jks
+*.keystore
+key.properties
