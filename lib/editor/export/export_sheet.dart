@@ -6,7 +6,7 @@ import 'card_exporter.dart';
 /// Export options. By default the tag (above) and the prize marker (below)
 /// are included, so the saved picture looks like the editor preview.
 Future<void> showExportSheet(BuildContext context, EditorController c) {
-  final hasExtras = c.project.prize || c.project.tagAsset != null;
+  final hasExtras = c.project.prize || c.project.tagAssets.isNotEmpty;
   var includeExtras = true;
 
   return showModalBottomSheet<void>(

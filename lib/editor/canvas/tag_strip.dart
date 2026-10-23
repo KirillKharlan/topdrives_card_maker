@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../data/models/card_project.dart';
 import '../../templates/template_spec.dart';
 
-/// Series tag above the card (the card's own "Team Favourite"-style pill).
+/// Series tags above the card, side by side (wrapping to a new line if they
+/// do not fit the card width).
 class TagStrip extends StatelessWidget {
   const TagStrip({super.key, required this.project, required this.template});
 
@@ -15,17 +16,25 @@ class TagStrip extends StatelessWidget {
     final ex = template.extras;
     return SizedBox(
       width: template.width,
-      height: ex.tagStripHeight,
       child: Padding(
-        padding: EdgeInsets.only(left: ex.tagPaddingLeft, top: ex.tagPaddingTop),
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: Image.asset(
-            project.tagAsset!,
-            height: ex.tagHeight,
-            filterQuality: FilterQuality.high,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-          ),
+        padding: EdgeInsets.fromLTRB(
+          ex.tagPaddingLeft,
+          ex.tagPaddingTop,
+          ex.tagPaddingLeft,
+          ex.tagPaddingBottom,
+        ),
+        child: Wrap(
+          spacing: ex.tagGap,
+          runSpacing: ex.tagGap,
+          children: [
+            for (final tag in project.tagAssets)
+              Image.asset(
+                tag,
+                height: ex.tagHeight,
+                filterQuality: FilterQuality.high,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+          ],
         ),
       ),
     );

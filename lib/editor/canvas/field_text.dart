@@ -7,9 +7,10 @@ import 'card_text_style.dart';
 /// One text field of the card, placed by a [FieldRect] from the template.
 /// [parts] are (text, bold) pairs drawn on a single line.
 class FieldText extends StatelessWidget {
-  const FieldText({super.key, required this.rect, required this.parts});
+  const FieldText({super.key, required this.rect, required this.parts, this.scale = 1.0});
 
   final FieldRect rect;
+  final double scale;
   final List<(String, bool)> parts;
 
   @override
@@ -20,7 +21,7 @@ class FieldText extends StatelessWidget {
       child: Text.rich(
         TextSpan(children: [
           for (final (value, bold) in parts)
-            TextSpan(text: value, style: cardTextStyle(rect.size, bold: bold)),
+            TextSpan(text: value, style: cardTextStyle(rect.size * scale, bold: bold)),
         ]),
         maxLines: 1,
         softWrap: false,

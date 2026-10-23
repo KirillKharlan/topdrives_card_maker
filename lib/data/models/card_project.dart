@@ -24,9 +24,10 @@ class CardProject {
     this.rq = '50',
     this.prize = false,
     this.prizeText = defaultPrizeText,
-    this.tagAsset,
+    List<String>? tagAssets,
     DateTime? updatedAt,
-  }) : updatedAt = updatedAt ?? DateTime.now();
+  })  : tagAssets = tagAssets ?? <String>[],
+        updatedAt = updatedAt ?? DateTime.now();
 
   static const defaultPrizeText = 'This car is only available by winning certain events.';
 
@@ -56,7 +57,8 @@ class CardProject {
   String rq;
   bool prize;
   String prizeText;
-  String? tagAsset;
+  /// Series tags shown above the card, left to right.
+  List<String> tagAssets;
   DateTime updatedAt;
 
   Map<String, dynamic> toJson() => {
@@ -80,12 +82,19 @@ class CardProject {
         'rq': rq,
         'prize': prize,
         'prizeText': prizeText,
-        'tagAsset': tagAsset,
+        'tagAssets': tagAssets,
         'updatedAt': updatedAt.toIso8601String(),
       };
 
   factory CardProject.fromJson(Map<String, dynamic> j) {
     String s(String key, String fallback) => (j[key] as String?) ?? fallback;
+    final tags = <String>[];
+    final rawTags = j['tagAssets'];
+    if (rawTags is List) {
+      tags.addAll(rawTags.whereType<String>());
+    } else if (j['tagAsset'] is String) {
+      tags.add(j['tagAsset'] as String); // projects saved by older versions
+    }
     return CardProject(
       id: j['id'] as String,
       name: s('name', 'New card'),
@@ -107,7 +116,7 @@ class CardProject {
       rq: s('rq', ''),
       prize: (j['prize'] as bool?) ?? false,
       prizeText: s('prizeText', defaultPrizeText),
-      tagAsset: j['tagAsset'] as String?,
+      tagAssets: tags,
       updatedAt: DateTime.tryParse(j['updatedAt'] as String? ?? ''),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/card_project.dart';
 import '../../templates/template_spec.dart';
+import 'card_text_style.dart';
 
 /// Prize-car marker under the card: trophy icon + text, like in the game.
 class PrizeStrip extends StatelessWidget {
@@ -43,14 +44,7 @@ class PrizeStrip extends StatelessWidget {
               width: ex.prizeTextWidth,
               child: Text(
                 project.prizeText,
-                // No fontFamily on purpose: the game uses the regular system
-                // font here (Roboto on Android), not the condensed one.
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: ex.prizeTextSize,
-                  height: 1.1,
-                  decoration: TextDecoration.none,
-                ),
+                style: cardTextStyle(ex.prizeTextSize * template.textScale).copyWith(height: 1.1),
               ),
             ),
           ],

@@ -49,11 +49,11 @@ class LogoSpec {
   final double x, y, w, h, padding;
 
   factory LogoSpec.fromJson(Map<String, dynamic> j) => LogoSpec(
-        x: _d(j['x']),
-        y: _d(j['y']),
-        w: _d(j['w']),
-        h: _d(j['h']),
-        padding: _d(j['padding'] ?? 0),
+        x: _d(j['x'] ?? 0),
+        y: _d(j['y'] ?? 0),
+        w: _d(j['w'] ?? 139),
+        h: _d(j['h'] ?? 96),
+        padding: _d(j['padding'] ?? 8),
       );
 }
 
@@ -61,10 +61,11 @@ class LogoSpec {
 class ExtrasSpec {
   const ExtrasSpec({
     required this.backdrop,
-    required this.tagStripHeight,
     required this.tagHeight,
     required this.tagPaddingLeft,
     required this.tagPaddingTop,
+    required this.tagPaddingBottom,
+    required this.tagGap,
     required this.prizeStripHeight,
     required this.prizeIconHeight,
     required this.prizePaddingLeft,
@@ -74,22 +75,24 @@ class ExtrasSpec {
   });
 
   final Color backdrop;
-  final double tagStripHeight, tagHeight, tagPaddingLeft, tagPaddingTop;
+  final double tagHeight, tagPaddingLeft, tagPaddingTop, tagPaddingBottom, tagGap;
   final double prizeStripHeight, prizeIconHeight, prizePaddingLeft, prizeGap;
   final double prizeTextSize, prizeTextWidth;
 
   factory ExtrasSpec.fromJson(Map<String, dynamic> j) => ExtrasSpec(
         backdrop: _hexColor(j['backdrop'] as String? ?? '#1E1E1E'),
-        tagStripHeight: _d(j['tagStripHeight']),
-        tagHeight: _d(j['tagHeight']),
-        tagPaddingLeft: _d(j['tagPaddingLeft']),
-        tagPaddingTop: _d(j['tagPaddingTop']),
-        prizeStripHeight: _d(j['prizeStripHeight']),
-        prizeIconHeight: _d(j['prizeIconHeight']),
-        prizePaddingLeft: _d(j['prizePaddingLeft']),
-        prizeGap: _d(j['prizeGap']),
-        prizeTextSize: _d(j['prizeTextSize']),
-        prizeTextWidth: _d(j['prizeTextWidth']),
+        // Defaults keep the app starting even if an older standard.json is bundled.
+        tagHeight: _d(j['tagHeight'] ?? 50),
+        tagPaddingLeft: _d(j['tagPaddingLeft'] ?? 4),
+        tagPaddingTop: _d(j['tagPaddingTop'] ?? 8),
+        tagPaddingBottom: _d(j['tagPaddingBottom'] ?? 12),
+        tagGap: _d(j['tagGap'] ?? 10),
+        prizeStripHeight: _d(j['prizeStripHeight'] ?? 148),
+        prizeIconHeight: _d(j['prizeIconHeight'] ?? 92),
+        prizePaddingLeft: _d(j['prizePaddingLeft'] ?? 68),
+        prizeGap: _d(j['prizeGap'] ?? 22),
+        prizeTextSize: _d(j['prizeTextSize'] ?? 47),
+        prizeTextWidth: _d(j['prizeTextWidth'] ?? 560),
       );
 }
 
@@ -103,6 +106,7 @@ class TemplateSpec {
     required this.width,
     required this.height,
     required this.cornerRadius,
+    required this.textScale,
     required this.photoBackground,
     required this.frames,
     required this.prizeBanner,
@@ -114,6 +118,9 @@ class TemplateSpec {
 
   final String id, name;
   final double width, height, cornerRadius;
+
+  /// Multiplies every text size of the template (one knob for fine-tuning).
+  final double textScale;
   final Color photoBackground;
   final Map<String, String> frames;
   final String prizeBanner;
@@ -131,6 +138,7 @@ class TemplateSpec {
       width: _d(j['width']),
       height: _d(j['height']),
       cornerRadius: _d(j['cornerRadius'] ?? 0),
+      textScale: _d(j['textScale'] ?? 1.0),
       photoBackground: _hexColor(j['photoBackground'] as String? ?? '#2B2B2B'),
       frames: (j['frames'] as Map<String, dynamic>).map((k, v) => MapEntry(k, v as String)),
       prizeBanner: j['prizeBanner'] as String,

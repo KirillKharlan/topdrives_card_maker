@@ -31,7 +31,9 @@ class CardComposition extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+      child: RepaintBoundary(
       key: fullKey,
       child: SizedBox(
         width: template.width,
@@ -40,7 +42,7 @@ class CardComposition extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (project.tagAsset != null) TagStrip(project: project, template: template),
+              if (project.tagAssets.isNotEmpty) TagStrip(project: project, template: template),
               RepaintBoundary(
                 key: cardKey,
                 child: CardView(
@@ -55,6 +57,6 @@ class CardComposition extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }

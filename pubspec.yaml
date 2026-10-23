@@ -28,8 +28,6 @@ flutter:
     - assets/frames/
     - assets/overlays/
     - assets/tags/
-  # Offline font: download Roboto Condensed from Google Fonts (SIL OFL),
-  # put the files into assets/fonts/ and uncomment this block.
   fonts:
     - family: RobotoCondensed
       fonts:

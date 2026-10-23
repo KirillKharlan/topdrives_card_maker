@@ -30,7 +30,10 @@ class CardView extends StatelessWidget {
     final frame = t.frames[project.carClass] ?? t.frames.values.first;
     final drivePrefix = project.drive.isEmpty ? '' : project.drive[0];
 
-    return SizedBox(
+    // Card text must not depend on the phone's font-size setting.
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+      child: SizedBox(
       width: t.width,
       height: t.height,
       child: ClipRRect(
@@ -51,23 +54,27 @@ class CardView extends StatelessWidget {
               ),
             ),
             if (logoFile != null) _logo(),
-            FieldText(
+            FieldText(scale: t.textScale, 
               rect: t.field('title'),
               parts: [('${project.brand} ', true), (project.model, false)],
             ),
-            FieldText(rect: t.field('year'), parts: [(project.year, false)]),
-            FieldText(rect: t.field('country'), parts: [(project.country, true)]),
-            FieldText(rect: t.field('topSpeed'), parts: [(project.topSpeed, true)]),
-            FieldText(rect: t.field('accel'), parts: [(project.accel, true)]),
-            FieldText(rect: t.field('handling'), parts: [(project.handling, true)]),
+            FieldText(scale: t.textScale, rect: t.field('year'), parts: [(project.year, false)]),
+            FieldText(scale: t.textScale, rect: t.field('country'), parts: [(project.country, true)]),
+            FieldText(scale: t.textScale, rect: t.field('topSpeed'), parts: [(project.topSpeed, true)]),
+            FieldText(scale: t.textScale, rect: t.field('accel'), parts: [(project.accel, true)]),
+            FieldText(scale: t.textScale, rect: t.field('handling'), parts: [(project.handling, true)]),
             // The frame already contains "WD"; we add only R / F / 4.
-            FieldText(rect: t.field('drivePrefix'), parts: [(drivePrefix, true)]),
-            FieldText(rect: t.field('tyre'), parts: [(project.tyre.toUpperCase(), false)]),
-            FieldText(rect: t.field('rq'), parts: [(project.rq, true)]),
+            FieldText(scale: t.textScale, rect: t.field('drivePrefix'), parts: [(drivePrefix, true)]),
+            // "Tyres" used to be baked into the frame (too bold); it is drawn here now.
+            FieldText(scale: t.textScale, 
+              rect: t.field('tyre'),
+              parts: [(project.tyre.toUpperCase(), false), ('\u00A0\u00A0Tyres', false)],
+            ),
+            FieldText(scale: t.textScale, rect: t.field('rq'), parts: [(project.rq, true)]),
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _logo() {
