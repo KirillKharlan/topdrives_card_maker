@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'app.dart';
-import 'data/repositories/app_store.dart';
+import 'bootstrap.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final store = await AppStore.open();
-  runApp(CardMakerApp(store: store));
+  runApp(const BootstrapApp());
 }
