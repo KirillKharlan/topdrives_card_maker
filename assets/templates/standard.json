@@ -7,13 +7,13 @@
   "textScale": 0.9,
   "photoBackground": "#2B2B2B",
   "frames": {
-    "S": "assets/frames/S.png",
-    "A": "assets/frames/A.png",
-    "B": "assets/frames/B.png",
-    "C": "assets/frames/C.png",
-    "D": "assets/frames/D.png",
-    "E": "assets/frames/E.png",
-    "F": "assets/frames/F.png"
+    "S": "assets/frames/legendary.png",
+    "A": "assets/frames/epic.png",
+    "B": "assets/frames/ultra_rare.png",
+    "C": "assets/frames/super_rare.png",
+    "D": "assets/frames/rare.png",
+    "E": "assets/frames/uncommon.png",
+    "F": "assets/frames/common.png"
   },
   "prizeBanner": "assets/overlays/prize_car.png",
   "prizeVisibleWidth": 0.092,
