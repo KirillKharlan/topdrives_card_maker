@@ -15,18 +15,99 @@
     "F": "assets/frames/F.png"
   },
   "prizeBanner": "assets/overlays/prize_car.png",
-  "prizeVisibleWidth": 0.07,
-  "logo": { "cx": 69, "cy": 48, "diameter": 64 },
-  "extras": { "stripHeight": 96, "padding": 8, "gap": 16, "prizeHeight": 80, "tagHeight": 56 },
+  "prizeVisibleWidth": 0.092,
+  "logo": {
+    "x": 0,
+    "y": 0,
+    "w": 139,
+    "h": 96,
+    "padding": 8
+  },
+  "extras": {
+    "backdrop": "#1E1E1E",
+    "tagStripHeight": 70,
+    "tagHeight": 50,
+    "tagPaddingLeft": 4,
+    "tagPaddingTop": 8,
+    "prizeStripHeight": 148,
+    "prizeIconHeight": 92,
+    "prizePaddingLeft": 68,
+    "prizeGap": 22,
+    "prizeTextSize": 34,
+    "prizeTextWidth": 560
+  },
   "fields": {
-    "title":       { "x": 154,  "y": 14,  "w": 890, "h": 68,  "size": 38,  "align": "left"   },
-    "year":        { "x": 1070, "y": 14,  "w": 112, "h": 68,  "size": 34,  "align": "right"  },
-    "country":     { "x": 1186, "y": 10,  "w": 124, "h": 76,  "size": 50,  "align": "right"  },
-    "topSpeed":    { "x": 1090, "y": 110, "w": 226, "h": 112, "size": 100, "align": "right"  },
-    "accel":       { "x": 1090, "y": 294, "w": 226, "h": 112, "size": 100, "align": "right"  },
-    "handling":    { "x": 1090, "y": 475, "w": 226, "h": 112, "size": 100, "align": "right"  },
-    "drivePrefix": { "x": 1060, "y": 660, "w": 134, "h": 110, "size": 92,  "align": "right"  },
-    "tyre":        { "x": 420,  "y": 752, "w": 505, "h": 66,  "size": 30,  "align": "right"  },
-    "rq":          { "x": 0,    "y": 652, "w": 139, "h": 100, "size": 86,  "align": "center" }
+    "title": {
+      "x": 154,
+      "y": 12,
+      "w": 890,
+      "h": 68,
+      "size": 50,
+      "align": "left"
+    },
+    "year": {
+      "x": 1061,
+      "y": 13,
+      "w": 112,
+      "h": 68,
+      "size": 52,
+      "align": "right"
+    },
+    "country": {
+      "x": 1176,
+      "y": 9,
+      "w": 124,
+      "h": 76,
+      "size": 74,
+      "align": "right"
+    },
+    "topSpeed": {
+      "x": 1090,
+      "y": 112,
+      "w": 226,
+      "h": 112,
+      "size": 100,
+      "align": "right"
+    },
+    "accel": {
+      "x": 1090,
+      "y": 295,
+      "w": 226,
+      "h": 112,
+      "size": 100,
+      "align": "right"
+    },
+    "handling": {
+      "x": 1090,
+      "y": 478,
+      "w": 226,
+      "h": 112,
+      "size": 100,
+      "align": "right"
+    },
+    "drivePrefix": {
+      "x": 1060,
+      "y": 662,
+      "w": 134,
+      "h": 110,
+      "size": 96,
+      "align": "right"
+    },
+    "tyre": {
+      "x": 420,
+      "y": 755,
+      "w": 493,
+      "h": 66,
+      "size": 48,
+      "align": "right"
+    },
+    "rq": {
+      "x": 0,
+      "y": 662,
+      "w": 139,
+      "h": 100,
+      "size": 86,
+      "align": "center"
+    }
   }
 }
