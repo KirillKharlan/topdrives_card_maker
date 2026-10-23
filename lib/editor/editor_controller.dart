@@ -46,7 +46,13 @@ class EditorController extends ChangeNotifier {
         p.photoTransform = PhotoTransform.identity;
       });
 
-  void setLogo(String? id) => update((p) => p.logoId = id);
+  /// A different logo has different proportions, so its size is reset.
+  void setLogo(String? id) => update((p) {
+        p.logoId = id;
+        p.logoScale = 1.0;
+      });
+
+  void setLogoScale(double scale) => update((p) => p.logoScale = scale);
 
   void setPhotoScale(double scale) => update((p) {
         final t = p.photoTransform;

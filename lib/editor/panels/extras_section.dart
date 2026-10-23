@@ -16,7 +16,7 @@ class ExtrasSection extends StatelessWidget {
     final c = controller;
     final tag = c.project.tagAsset;
     return SectionCard(
-      title: 'Above the card',
+      title: 'Tag and prize marker',
       children: [
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -24,6 +24,21 @@ class ExtrasSection extends StatelessWidget {
           value: c.project.prize,
           onChanged: (v) => c.update((p) => p.prize = v),
         ),
+        if (c.project.prize)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: TextFormField(
+              initialValue: c.project.prizeText,
+              minLines: 1,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Prize marker text',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: (v) => c.update((p) => p.prizeText = v),
+            ),
+          ),
         Row(
           children: [
             Expanded(

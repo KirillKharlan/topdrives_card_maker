@@ -1,5 +1,10 @@
 import 'package:flutter/painting.dart';
 
+Color _hexColor(String hex) =>
+    Color(int.parse(hex.replaceFirst('#', ''), radix: 16) | 0xFF000000);
+
+double _d(Object? v) => (v as num).toDouble();
+
 /// Rectangle (in card pixels) where one piece of text is drawn. The text is
 /// vertically centred and shrinks automatically when it does not fit.
 class FieldRect {
@@ -22,51 +27,75 @@ class FieldRect {
       };
 
   factory FieldRect.fromJson(Map<String, dynamic> j) => FieldRect(
-        x: (j['x'] as num).toDouble(),
-        y: (j['y'] as num).toDouble(),
-        w: (j['w'] as num).toDouble(),
-        h: (j['h'] as num).toDouble(),
-        size: (j['size'] as num).toDouble(),
+        x: _d(j['x']),
+        y: _d(j['y']),
+        w: _d(j['w']),
+        h: _d(j['h']),
+        size: _d(j['size']),
         align: (j['align'] as String?) ?? 'left',
       );
 }
 
+/// The logo slot of the frame (the dark tile in the top-left corner).
 class LogoSpec {
-  const LogoSpec({required this.cx, required this.cy, required this.diameter});
+  const LogoSpec({
+    required this.x,
+    required this.y,
+    required this.w,
+    required this.h,
+    required this.padding,
+  });
 
-  final double cx, cy, diameter;
+  final double x, y, w, h, padding;
 
   factory LogoSpec.fromJson(Map<String, dynamic> j) => LogoSpec(
-        cx: (j['cx'] as num).toDouble(),
-        cy: (j['cy'] as num).toDouble(),
-        diameter: (j['diameter'] as num).toDouble(),
+        x: _d(j['x']),
+        y: _d(j['y']),
+        w: _d(j['w']),
+        h: _d(j['h']),
+        padding: _d(j['padding'] ?? 0),
       );
 }
 
-/// Strip above the card that holds the prize banner and the series tag.
+/// Tag (above the card) and prize-car marker (below the card).
 class ExtrasSpec {
   const ExtrasSpec({
-    required this.stripHeight,
-    required this.padding,
-    required this.gap,
-    required this.prizeHeight,
+    required this.backdrop,
+    required this.tagStripHeight,
     required this.tagHeight,
+    required this.tagPaddingLeft,
+    required this.tagPaddingTop,
+    required this.prizeStripHeight,
+    required this.prizeIconHeight,
+    required this.prizePaddingLeft,
+    required this.prizeGap,
+    required this.prizeTextSize,
+    required this.prizeTextWidth,
   });
 
-  final double stripHeight, padding, gap, prizeHeight, tagHeight;
+  final Color backdrop;
+  final double tagStripHeight, tagHeight, tagPaddingLeft, tagPaddingTop;
+  final double prizeStripHeight, prizeIconHeight, prizePaddingLeft, prizeGap;
+  final double prizeTextSize, prizeTextWidth;
 
   factory ExtrasSpec.fromJson(Map<String, dynamic> j) => ExtrasSpec(
-        stripHeight: (j['stripHeight'] as num).toDouble(),
-        padding: (j['padding'] as num).toDouble(),
-        gap: (j['gap'] as num).toDouble(),
-        prizeHeight: (j['prizeHeight'] as num).toDouble(),
-        tagHeight: (j['tagHeight'] as num).toDouble(),
+        backdrop: _hexColor(j['backdrop'] as String? ?? '#1E1E1E'),
+        tagStripHeight: _d(j['tagStripHeight']),
+        tagHeight: _d(j['tagHeight']),
+        tagPaddingLeft: _d(j['tagPaddingLeft']),
+        tagPaddingTop: _d(j['tagPaddingTop']),
+        prizeStripHeight: _d(j['prizeStripHeight']),
+        prizeIconHeight: _d(j['prizeIconHeight']),
+        prizePaddingLeft: _d(j['prizePaddingLeft']),
+        prizeGap: _d(j['prizeGap']),
+        prizeTextSize: _d(j['prizeTextSize']),
+        prizeTextWidth: _d(j['prizeTextWidth']),
       );
 }
 
 /// Everything the renderer needs to draw a card: frames, text positions and
-/// the extras strip. Loaded from assets/templates/<id>.json, so a new
-/// template is a new JSON + images, not new code.
+/// the extras. Loaded from assets/templates/<id>.json, so a new template is
+/// a new JSON + images, not new code.
 class TemplateSpec {
   const TemplateSpec({
     required this.id,
@@ -96,17 +125,16 @@ class TemplateSpec {
   FieldRect field(String key) => fields[key]!;
 
   factory TemplateSpec.fromJson(Map<String, dynamic> j) {
-    final hex = (j['photoBackground'] as String? ?? '#2B2B2B').replaceFirst('#', '');
     return TemplateSpec(
       id: j['id'] as String,
       name: j['name'] as String,
-      width: (j['width'] as num).toDouble(),
-      height: (j['height'] as num).toDouble(),
-      cornerRadius: (j['cornerRadius'] as num?)?.toDouble() ?? 0,
-      photoBackground: Color(int.parse(hex, radix: 16) | 0xFF000000),
+      width: _d(j['width']),
+      height: _d(j['height']),
+      cornerRadius: _d(j['cornerRadius'] ?? 0),
+      photoBackground: _hexColor(j['photoBackground'] as String? ?? '#2B2B2B'),
       frames: (j['frames'] as Map<String, dynamic>).map((k, v) => MapEntry(k, v as String)),
       prizeBanner: j['prizeBanner'] as String,
-      prizeVisibleWidth: (j['prizeVisibleWidth'] as num?)?.toDouble() ?? 1,
+      prizeVisibleWidth: _d(j['prizeVisibleWidth'] ?? 1),
       logo: LogoSpec.fromJson(j['logo'] as Map<String, dynamic>),
       extras: ExtrasSpec.fromJson(j['extras'] as Map<String, dynamic>),
       fields: (j['fields'] as Map<String, dynamic>)

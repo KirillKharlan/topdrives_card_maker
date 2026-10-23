@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import '../../data/models/card_project.dart';
 import '../../templates/template_spec.dart';
 import 'card_view.dart';
-import 'extras_strip.dart';
+import 'prize_strip.dart';
+import 'tag_strip.dart';
 
-/// Extras strip + card. [fullKey] captures both (transparent background),
-/// [cardKey] captures only the card.
+/// Tag (top) + card + prize marker (bottom) on a dark backdrop, like a game
+/// screenshot. [fullKey] captures everything, [cardKey] only the card
+/// (transparent rounded corners).
 class CardComposition extends StatelessWidget {
   const CardComposition({
     super.key,
@@ -33,20 +35,24 @@ class CardComposition extends StatelessWidget {
       key: fullKey,
       child: SizedBox(
         width: template.width,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ExtrasStrip(project: project, template: template),
-            RepaintBoundary(
-              key: cardKey,
-              child: CardView(
-                project: project,
-                template: template,
-                photoFile: photoFile,
-                logoFile: logoFile,
+        child: ColoredBox(
+          color: template.extras.backdrop,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (project.tagAsset != null) TagStrip(project: project, template: template),
+              RepaintBoundary(
+                key: cardKey,
+                child: CardView(
+                  project: project,
+                  template: template,
+                  photoFile: photoFile,
+                  logoFile: logoFile,
+                ),
               ),
-            ),
-          ],
+              if (project.prize) PrizeStrip(project: project, template: template),
+            ],
+          ),
         ),
       ),
     );

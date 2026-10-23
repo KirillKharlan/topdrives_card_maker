@@ -7,6 +7,7 @@ import '../../data/models/media_item.dart';
 import '../../data/models/photo_transform.dart';
 import '../../logo_editor/logo_editor_screen.dart';
 import '../../ui/library/library_screen.dart';
+import '../canvas/logo_tile.dart';
 import '../editor_controller.dart';
 import 'section_card.dart';
 
@@ -69,6 +70,8 @@ class MediaSection extends StatelessWidget {
     final p = controller.project;
     final hasPhoto = p.photoId != null;
     final hasLogo = p.logoId != null;
+    final logoFile = controller.logoFile;
+    final logoSlot = controller.template.logo;
 
     return Column(
       children: [
@@ -125,6 +128,47 @@ class MediaSection extends StatelessWidget {
         SectionCard(
           title: 'Brand logo',
           children: [
+            if (hasLogo && logoFile != null) ...[
+              // Same size ratio as the logo slot on the card, so what you see
+              // here is what ends up on the card.
+              Center(
+                child: SizedBox(
+                  width: 220,
+                  child: FittedBox(
+                    child: SizedBox(
+                      width: logoSlot.w,
+                      height: logoSlot.h,
+                      child: ColoredBox(
+                        color: const Color(0xFF4B4339),
+                        child: LogoTile(
+                          file: logoFile,
+                          scale: p.logoScale,
+                          padding: logoSlot.padding,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  const Icon(Icons.photo_size_select_large),
+                  Expanded(
+                    child: Slider(
+                      value: p.logoScale.clamp(0.3, 2.5).toDouble(),
+                      min: 0.3,
+                      max: 2.5,
+                      onChanged: controller.setLogoScale,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => controller.setLogoScale(1.0),
+                    child: const Text('Reset'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+            ],
             Wrap(
               spacing: 8,
               children: [

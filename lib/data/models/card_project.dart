@@ -10,6 +10,7 @@ class CardProject {
     this.photoId,
     this.photoTransform = PhotoTransform.identity,
     this.logoId,
+    this.logoScale = 1.0,
     this.brand = 'Brand',
     this.model = 'Model',
     this.year = '2020',
@@ -22,9 +23,12 @@ class CardProject {
     this.carClass = 'B',
     this.rq = '50',
     this.prize = false,
+    this.prizeText = defaultPrizeText,
     this.tagAsset,
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? DateTime.now();
+
+  static const defaultPrizeText = 'This car is only available by winning certain events.';
 
   static String newId() => DateTime.now().microsecondsSinceEpoch.toString();
 
@@ -36,6 +40,9 @@ class CardProject {
   String? photoId;
   PhotoTransform photoTransform;
   String? logoId;
+
+  /// Logo size inside its slot on the card (1.0 = fit the slot).
+  double logoScale;
   String brand;
   String model;
   String year;
@@ -48,6 +55,7 @@ class CardProject {
   String carClass;
   String rq;
   bool prize;
+  String prizeText;
   String? tagAsset;
   DateTime updatedAt;
 
@@ -58,6 +66,7 @@ class CardProject {
         'photoId': photoId,
         'photoTransform': photoTransform.toJson(),
         'logoId': logoId,
+        'logoScale': logoScale,
         'brand': brand,
         'model': model,
         'year': year,
@@ -70,6 +79,7 @@ class CardProject {
         'carClass': carClass,
         'rq': rq,
         'prize': prize,
+        'prizeText': prizeText,
         'tagAsset': tagAsset,
         'updatedAt': updatedAt.toIso8601String(),
       };
@@ -83,6 +93,7 @@ class CardProject {
       photoId: j['photoId'] as String?,
       photoTransform: PhotoTransform.fromJson(j['photoTransform'] as Map<String, dynamic>?),
       logoId: j['logoId'] as String?,
+      logoScale: (j['logoScale'] as num?)?.toDouble() ?? 1.0,
       brand: s('brand', ''),
       model: s('model', ''),
       year: s('year', ''),
@@ -95,6 +106,7 @@ class CardProject {
       carClass: s('carClass', 'B'),
       rq: s('rq', ''),
       prize: (j['prize'] as bool?) ?? false,
+      prizeText: s('prizeText', defaultPrizeText),
       tagAsset: j['tagAsset'] as String?,
       updatedAt: DateTime.tryParse(j['updatedAt'] as String? ?? ''),
     );

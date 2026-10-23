@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/card_project.dart';
 import '../../templates/template_spec.dart';
 import 'field_text.dart';
+import 'logo_tile.dart';
 import 'photo_layer.dart';
 
 /// The card itself, drawn at the template's native size (e.g. 1338x828).
@@ -61,7 +62,7 @@ class CardView extends StatelessWidget {
             FieldText(rect: t.field('handling'), parts: [(project.handling, true)]),
             // The frame already contains "WD"; we add only R / F / 4.
             FieldText(rect: t.field('drivePrefix'), parts: [(drivePrefix, true)]),
-            FieldText(rect: t.field('tyre'), parts: [(project.tyre.toUpperCase(), true)]),
+            FieldText(rect: t.field('tyre'), parts: [(project.tyre.toUpperCase(), false)]),
             FieldText(rect: t.field('rq'), parts: [(project.rq, true)]),
           ],
         ),
@@ -72,17 +73,11 @@ class CardView extends StatelessWidget {
   Widget _logo() {
     final l = template.logo;
     return Positioned(
-      left: l.cx - l.diameter / 2,
-      top: l.cy - l.diameter / 2,
-      width: l.diameter,
-      height: l.diameter,
-      child: Image.file(
-        logoFile!,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-        cacheWidth: 512,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      ),
+      left: l.x,
+      top: l.y,
+      width: l.w,
+      height: l.h,
+      child: LogoTile(file: logoFile!, scale: project.logoScale, padding: l.padding),
     );
   }
 }
