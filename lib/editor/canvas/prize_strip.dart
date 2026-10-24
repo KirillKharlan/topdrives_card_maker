@@ -11,6 +11,28 @@ class PrizeStrip extends StatelessWidget {
   final CardProject project;
   final TemplateSpec template;
 
+  /// Roboto Condensed only comes in Regular and Bold, so a "semi-bold" is made by
+  /// drawing the text twice: normally and with a thin outline of the same colour.
+  Widget _heavyText(ExtrasSpec ex) {
+    final size = ex.prizeTextSize * template.textScale;
+    final fill = cardTextStyle(size, letterSpacing: ex.prizeLetterSpacing).copyWith(height: 1.1);
+    final outline = cardTextStyle(
+      size,
+      letterSpacing: ex.prizeLetterSpacing,
+      foreground: Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = ex.prizeTextStroke
+        ..strokeJoin = StrokeJoin.round
+        ..color = Colors.white,
+    ).copyWith(height: 1.1);
+    return Stack(
+      children: [
+        Text(project.prizeText, style: fill),
+        Text(project.prizeText, style: outline),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ex = template.extras;
@@ -42,10 +64,7 @@ class PrizeStrip extends StatelessWidget {
             SizedBox(width: ex.prizeGap),
             SizedBox(
               width: ex.prizeTextWidth,
-              child: Text(
-                project.prizeText,
-                style: cardTextStyle(ex.prizeTextSize * template.textScale).copyWith(height: 1.1),
-              ),
+              child: _heavyText(ex),
             ),
           ],
         ),

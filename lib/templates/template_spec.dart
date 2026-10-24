@@ -72,12 +72,17 @@ class ExtrasSpec {
     required this.prizeGap,
     required this.prizeTextSize,
     required this.prizeTextWidth,
+    required this.prizeLetterSpacing,
+    required this.prizeTextStroke,
   });
 
   final Color backdrop;
   final double tagHeight, tagPaddingLeft, tagPaddingTop, tagPaddingBottom, tagGap;
   final double prizeStripHeight, prizeIconHeight, prizePaddingLeft, prizeGap;
   final double prizeTextSize, prizeTextWidth;
+
+  /// Extra spacing and outline width (card units) that make the prize text look heavier.
+  final double prizeLetterSpacing, prizeTextStroke;
 
   factory ExtrasSpec.fromJson(Map<String, dynamic> j) => ExtrasSpec(
         backdrop: _hexColor(j['backdrop'] as String? ?? '#1E1E1E'),
@@ -91,8 +96,10 @@ class ExtrasSpec {
         prizeIconHeight: _d(j['prizeIconHeight'] ?? 92),
         prizePaddingLeft: _d(j['prizePaddingLeft'] ?? 68),
         prizeGap: _d(j['prizeGap'] ?? 22),
-        prizeTextSize: _d(j['prizeTextSize'] ?? 47),
+        prizeTextSize: _d(j['prizeTextSize'] ?? 41),
         prizeTextWidth: _d(j['prizeTextWidth'] ?? 560),
+        prizeLetterSpacing: _d(j['prizeLetterSpacing'] ?? 2.4),
+        prizeTextStroke: _d(j['prizeTextStroke'] ?? 1.4),
       );
 }
 

@@ -42,7 +42,7 @@ class CardComposition extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (project.tagAssets.isNotEmpty) TagStrip(project: project, template: template),
+              if (project.tags.isNotEmpty) TagStrip(project: project, template: template),
               RepaintBoundary(
                 key: cardKey,
                 child: CardView(

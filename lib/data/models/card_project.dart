@@ -1,3 +1,4 @@
+import 'card_tag.dart';
 import 'photo_transform.dart';
 
 /// One fan-made card. Photos/logos are referenced by library id, so a project
@@ -24,9 +25,9 @@ class CardProject {
     this.rq = '50',
     this.prize = false,
     this.prizeText = defaultPrizeText,
-    List<String>? tagAssets,
+    List<CardTag>? tags,
     DateTime? updatedAt,
-  })  : tagAssets = tagAssets ?? <String>[],
+  })  : tags = tags ?? <CardTag>[],
         updatedAt = updatedAt ?? DateTime.now();
 
   static const defaultPrizeText = 'This car is only available by winning certain events.';
@@ -57,8 +58,8 @@ class CardProject {
   String rq;
   bool prize;
   String prizeText;
-  /// Series tags shown above the card, left to right.
-  List<String> tagAssets;
+  /// Tags shown above the card, left to right (ready-made or custom).
+  List<CardTag> tags;
   DateTime updatedAt;
 
   Map<String, dynamic> toJson() => {
@@ -82,18 +83,23 @@ class CardProject {
         'rq': rq,
         'prize': prize,
         'prizeText': prizeText,
-        'tagAssets': tagAssets,
+        'tags': tags.map((t) => t.toJson()).toList(),
         'updatedAt': updatedAt.toIso8601String(),
       };
 
   factory CardProject.fromJson(Map<String, dynamic> j) {
     String s(String key, String fallback) => (j[key] as String?) ?? fallback;
-    final tags = <String>[];
-    final rawTags = j['tagAssets'];
+    final tags = <CardTag>[];
+    final rawTags = j['tags'];
+    final legacyList = j['tagAssets']; // saved by older versions
     if (rawTags is List) {
-      tags.addAll(rawTags.whereType<String>());
+      for (final e in rawTags) {
+        if (e is Map<String, dynamic>) tags.add(CardTag.fromJson(e));
+      }
+    } else if (legacyList is List) {
+      tags.addAll(legacyList.whereType<String>().map((p) => CardTag(asset: p)));
     } else if (j['tagAsset'] is String) {
-      tags.add(j['tagAsset'] as String); // projects saved by older versions
+      tags.add(CardTag(asset: j['tagAsset'] as String));
     }
     return CardProject(
       id: j['id'] as String,
@@ -116,7 +122,7 @@ class CardProject {
       rq: s('rq', ''),
       prize: (j['prize'] as bool?) ?? false,
       prizeText: s('prizeText', defaultPrizeText),
-      tagAssets: tags,
+      tags: tags,
       updatedAt: DateTime.tryParse(j['updatedAt'] as String? ?? ''),
     );
   }

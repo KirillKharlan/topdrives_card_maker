@@ -79,7 +79,7 @@ class OptionsSection extends StatelessWidget {
           children: [_chips(AppConstants.drives, p.drive, (v) => c.update((x) => x.drive = v))],
         ),
         SectionCard(
-          title: ' ',
+          title: 'Tyres',
           children: [_chips(AppConstants.tyres, p.tyre, (v) => c.update((x) => x.tyre = v))],
         ),
         SectionCard(

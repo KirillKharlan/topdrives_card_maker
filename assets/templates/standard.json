@@ -33,10 +33,12 @@
     "prizeIconHeight": 92,
     "prizePaddingLeft": 68,
     "prizeGap": 22,
-    "prizeTextSize": 47,
+    "prizeTextSize": 41,
     "prizeTextWidth": 560,
     "tagPaddingBottom": 12,
-    "tagGap": 10
+    "tagGap": 10,
+    "prizeLetterSpacing": 2.4,
+    "prizeTextStroke": 1.4
   },
   "fields": {
     "title": {
@@ -68,7 +70,7 @@
       "y": 112,
       "w": 226,
       "h": 112,
-      "size": 102,
+      "size": 98,
       "align": "right"
     },
     "accel": {
@@ -76,7 +78,7 @@
       "y": 295,
       "w": 226,
       "h": 112,
-      "size": 102,
+      "size": 98,
       "align": "right"
     },
     "handling": {
@@ -84,21 +86,21 @@
       "y": 478,
       "w": 226,
       "h": 112,
-      "size": 102,
+      "size": 98,
       "align": "right"
     },
     "drivePrefix": {
-      "x": 1057,
-      "y": 659,
+      "x": 1058,
+      "y": 656,
       "w": 134,
       "h": 110,
-      "size": 106,
+      "size": 101,
       "align": "right"
     },
     "tyre": {
       "x": 420,
       "y": 755,
-      "w": 620,
+      "w": 516,
       "h": 66,
       "size": 48,
       "align": "right"

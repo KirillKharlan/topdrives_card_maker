@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/card_project.dart';
 import '../../templates/template_spec.dart';
+import 'custom_tag_view.dart';
 
-/// Series tags above the card, side by side (wrapping to a new line if they
-/// do not fit the card width).
+/// Tags above the card, side by side (wrapping to a new line if they do not
+/// fit the card width).
 class TagStrip extends StatelessWidget {
   const TagStrip({super.key, required this.project, required this.template});
 
@@ -27,13 +28,20 @@ class TagStrip extends StatelessWidget {
           spacing: ex.tagGap,
           runSpacing: ex.tagGap,
           children: [
-            for (final tag in project.tagAssets)
-              Image.asset(
-                tag,
-                height: ex.tagHeight,
-                filterQuality: FilterQuality.high,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
+            for (final tag in project.tags)
+              if (tag.isCustom)
+                CustomTagView(
+                  text: tag.text ?? '',
+                  colorValue: tag.colorValue ?? 0xFFF2C21B,
+                  height: ex.tagHeight,
+                )
+              else
+                Image.asset(
+                  tag.asset!,
+                  height: ex.tagHeight,
+                  filterQuality: FilterQuality.high,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
           ],
         ),
       ),

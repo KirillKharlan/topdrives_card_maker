@@ -65,11 +65,8 @@ class CardView extends StatelessWidget {
             FieldText(scale: t.textScale, rect: t.field('handling'), parts: [(project.handling, true)]),
             // The frame already contains "WD"; we add only R / F / 4.
             FieldText(scale: t.textScale, rect: t.field('drivePrefix'), parts: [(drivePrefix, true)]),
-            // "Tyres" used to be baked into the frame (too bold); it is drawn here now.
-            FieldText(scale: t.textScale, 
-              rect: t.field('tyre'),
-              parts: [(project.tyre.toUpperCase(), false), ('\u00A0\u00A0Tyres', false)],
-            ),
+            // The word "Tyres" is part of the frame; we add only the tyre name before it.
+            FieldText(scale: t.textScale, rect: t.field('tyre'), parts: [(project.tyre.toUpperCase(), false)]),
             FieldText(scale: t.textScale, rect: t.field('rq'), parts: [(project.rq, true)]),
           ],
         ),
