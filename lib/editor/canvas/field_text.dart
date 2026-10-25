@@ -13,8 +13,41 @@ class FieldText extends StatelessWidget {
   final double scale;
   final List<(String, bool)> parts;
 
+  /// Places the text so its baseline lies exactly on [baselineY].
+  Widget _onBaseline(double baselineY) {
+    final span = TextSpan(children: [
+      for (final (value, bold) in parts)
+        TextSpan(text: value, style: cardTextStyle(rect.size * scale, bold: bold)),
+    ]);
+    final painter = TextPainter(
+      text: span,
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      textScaler: TextScaler.noScaling,
+    )..layout();
+    final distance = painter.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+    painter.dispose();
+    return Positioned(
+      left: rect.x,
+      top: baselineY - distance,
+      width: rect.w,
+      child: Align(
+        alignment: rect.topAlignment,
+        heightFactor: 1.0,
+        child: Text.rich(
+          span,
+          maxLines: 1,
+          softWrap: false,
+          textScaler: TextScaler.noScaling,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final baselineY = rect.baseline;
+    if (baselineY != null) return _onBaseline(baselineY);
     Widget text = FittedBox(
       fit: BoxFit.scaleDown,
       alignment: rect.alignment,

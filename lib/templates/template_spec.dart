@@ -15,15 +15,27 @@ class FieldRect {
     required this.h,
     required this.size,
     required this.align,
+    this.baseline,
   });
 
   final double x, y, w, h, size;
   final String align;
 
+  /// If set, the text sits exactly on this baseline (card units) instead of being
+  /// centred vertically in the rectangle. Used to line the tyre name up with the
+  /// letter T of the "Tyres" word that is part of the frame.
+  final double? baseline;
+
   Alignment get alignment => switch (align) {
         'left' => Alignment.centerLeft,
         'right' => Alignment.centerRight,
         _ => Alignment.center,
+      };
+
+  Alignment get topAlignment => switch (align) {
+        'left' => Alignment.topLeft,
+        'right' => Alignment.topRight,
+        _ => Alignment.topCenter,
       };
 
   factory FieldRect.fromJson(Map<String, dynamic> j) => FieldRect(
@@ -33,6 +45,7 @@ class FieldRect {
         h: _d(j['h']),
         size: _d(j['size']),
         align: (j['align'] as String?) ?? 'left',
+        baseline: (j['baseline'] as num?)?.toDouble(),
       );
 }
 
