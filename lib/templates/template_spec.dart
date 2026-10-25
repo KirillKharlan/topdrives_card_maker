@@ -32,6 +32,17 @@ class FieldRect {
         _ => Alignment.center,
       };
 
+  /// The same field moved down by [dy] (used for the fine-tune setting).
+  FieldRect shifted(double dy) => FieldRect(
+        x: x,
+        y: baseline == null ? y + dy : y,
+        w: w,
+        h: h,
+        size: size,
+        align: align,
+        baseline: baseline == null ? null : baseline! + dy,
+      );
+
   Alignment get topAlignment => switch (align) {
         'left' => Alignment.topLeft,
         'right' => Alignment.topRight,
@@ -47,6 +58,16 @@ class FieldRect {
         align: (j['align'] as String?) ?? 'left',
         baseline: (j['baseline'] as num?)?.toDouble(),
       );
+}
+
+/// A rectangle in card units.
+class RegionRect {
+  const RegionRect({required this.x, required this.y, required this.w, required this.h});
+
+  final double x, y, w, h;
+
+  factory RegionRect.fromJson(Map<String, dynamic> j) =>
+      RegionRect(x: _d(j['x']), y: _d(j['y']), w: _d(j['w']), h: _d(j['h']));
 }
 
 /// The logo slot of the frame (the dark tile in the top-left corner).
@@ -127,6 +148,8 @@ class TemplateSpec {
     required this.height,
     required this.cornerRadius,
     required this.textScale,
+    required this.blurSigma,
+    required this.blurRegions,
     required this.photoBackground,
     required this.frames,
     required this.prizeBanner,
@@ -141,6 +164,11 @@ class TemplateSpec {
 
   /// Multiplies every text size of the template (one knob for fine-tuning).
   final double textScale;
+
+  /// Frosted-glass effect: the photo is blurred behind these semi-transparent
+  /// parts of the frame (the title bar and the stat panels).
+  final double blurSigma;
+  final List<RegionRect> blurRegions;
   final Color photoBackground;
   final Map<String, String> frames;
   final String prizeBanner;
@@ -159,6 +187,11 @@ class TemplateSpec {
       height: _d(j['height']),
       cornerRadius: _d(j['cornerRadius'] ?? 0),
       textScale: _d(j['textScale'] ?? 1.0),
+      blurSigma: _d(j['blurSigma'] ?? 0),
+      blurRegions: [
+        for (final e in (j['blurRegions'] as List? ?? const []))
+          RegionRect.fromJson(e as Map<String, dynamic>),
+      ],
       photoBackground: _hexColor(j['photoBackground'] as String? ?? '#2B2B2B'),
       frames: (j['frames'] as Map<String, dynamic>).map((k, v) => MapEntry(k, v as String)),
       prizeBanner: j['prizeBanner'] as String,

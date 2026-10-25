@@ -1,4 +1,5 @@
 import 'card_tag.dart';
+import 'photo_fill.dart';
 import 'photo_transform.dart';
 
 /// One fan-made card. Photos/logos are referenced by library id, so a project
@@ -10,6 +11,7 @@ class CardProject {
     this.templateId = 'standard',
     this.photoId,
     this.photoTransform = PhotoTransform.identity,
+    this.photoFill = PhotoFill.mirror,
     this.logoId,
     this.logoScale = 1.0,
     this.brand = 'Brand',
@@ -41,6 +43,7 @@ class CardProject {
   String templateId;
   String? photoId;
   PhotoTransform photoTransform;
+  PhotoFill photoFill;
   String? logoId;
 
   /// Logo size inside its slot on the card (1.0 = fit the slot).
@@ -77,6 +80,7 @@ class CardProject {
         'templateId': templateId,
         'photoId': photoId,
         'photoTransform': photoTransform.toJson(),
+        'photoFill': photoFill.name,
         'logoId': logoId,
         'logoScale': logoScale,
         'brand': brand,
@@ -116,6 +120,7 @@ class CardProject {
       templateId: s('templateId', 'standard'),
       photoId: j['photoId'] as String?,
       photoTransform: PhotoTransform.fromJson(j['photoTransform'] as Map<String, dynamic>?),
+      photoFill: parsePhotoFill(j['photoFill'] as String?),
       logoId: j['logoId'] as String?,
       logoScale: (j['logoScale'] as num?)?.toDouble() ?? 1.0,
       brand: s('brand', ''),

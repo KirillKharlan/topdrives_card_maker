@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/models/media_item.dart';
+import '../../data/models/photo_fill.dart';
 import '../../data/models/photo_transform.dart';
 import '../../logo_editor/logo_editor_screen.dart';
 import '../../ui/library/library_screen.dart';
@@ -106,8 +107,10 @@ class MediaSection extends StatelessWidget {
                   const Icon(Icons.zoom_in),
                   Expanded(
                     child: Slider(
-                      value: p.photoTransform.scale,
-                      min: 1,
+                      value: p.photoTransform.scale
+                          .clamp(PhotoTransform.minScale, PhotoTransform.maxScale)
+                          .toDouble(),
+                      min: PhotoTransform.minScale,
                       max: PhotoTransform.maxScale,
                       onChanged: controller.setPhotoScale,
                     ),
@@ -118,8 +121,49 @@ class MediaSection extends StatelessWidget {
                   ),
                 ],
               ),
+              Row(
+                children: [
+                  const Icon(Icons.rotate_right),
+                  Expanded(
+                    child: Slider(
+                      value: radiansToDegrees(p.photoTransform.rotation)
+                          .clamp(-180.0, 180.0)
+                          .toDouble(),
+                      min: -180,
+                      max: 180,
+                      onChanged: (v) => controller.setPhotoRotation(degreesToRadians(v)),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Rotate left 90°',
+                    icon: const Icon(Icons.rotate_90_degrees_ccw),
+                    onPressed: () => controller.rotatePhotoBy(degreesToRadians(-90)),
+                  ),
+                  IconButton(
+                    tooltip: 'Rotate right 90°',
+                    icon: const Icon(Icons.rotate_90_degrees_cw),
+                    onPressed: () => controller.rotatePhotoBy(degreesToRadians(90)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('Empty areas (photo does not reach the card edges):',
+                  style: Theme.of(context).textTheme.bodySmall),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final fill in PhotoFill.values)
+                    ChoiceChip(
+                      label: Text(fill.label),
+                      selected: p.photoFill == fill,
+                      onSelected: (_) => controller.setPhotoFill(fill),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
               Text(
-                'Drag and pinch on the card to frame the photo.',
+                'Drag, pinch and twist (two fingers) on the card to frame the photo. '
+                'Where the photo ends before the card edge, the gap is filled automatically.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],

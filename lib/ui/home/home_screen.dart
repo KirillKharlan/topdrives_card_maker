@@ -60,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.info_outline),
             tooltip: 'Version and updates',
-            onPressed: () => showAppInfoDialog(context),
+            onPressed: () => showAppInfoDialog(context, store.settings),
           ),
         ],
       ),

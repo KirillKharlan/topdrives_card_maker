@@ -74,6 +74,7 @@ class ProjectTile extends StatelessWidget {
                       template: template,
                       photoFile: store.photos.fileOf(project.photoId),
                       logoFile: store.logos.fileOf(project.logoId),
+                      photoMaxWidth: 700,
                     ),
                   ),
                 ),

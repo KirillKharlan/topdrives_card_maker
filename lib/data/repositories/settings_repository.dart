@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import '../../core/app_constants.dart';
+import '../../core/layout_tweaks.dart';
 import '../models/card_tag.dart';
 import '../storage/json_file_store.dart';
 
@@ -11,6 +12,7 @@ class SettingsRepository extends ChangeNotifier {
   late final File _file;
   final List<String> _customCountries = [];
   final List<CardTag> _customTags = [];
+  double _tyreNameOffset = 0;
 
   List<String> get customCountries => List.unmodifiable(_customCountries);
 
@@ -23,6 +25,11 @@ class SettingsRepository extends ChangeNotifier {
     if (data is Map<String, dynamic>) {
       final list = data['customCountries'];
       if (list is List) _customCountries.addAll(list.whereType<String>());
+      final offset = data['tyreNameOffset'];
+      if (offset is num) {
+        _tyreNameOffset = offset.toDouble();
+        LayoutTweaks.tyreNameOffset.value = _tyreNameOffset;
+      }
       final tags = data['customTags'];
       if (tags is List) {
         for (final e in tags) {
@@ -48,6 +55,14 @@ class SettingsRepository extends ChangeNotifier {
     _customCountries.remove(code);
     await _save();
     notifyListeners();
+  }
+
+  double get tyreNameOffset => _tyreNameOffset;
+
+  Future<void> setTyreNameOffset(double value) async {
+    _tyreNameOffset = value;
+    LayoutTweaks.tyreNameOffset.value = value;
+    await _save();
   }
 
   Future<void> addCustomTag(CardTag tag) async {
@@ -77,5 +92,6 @@ class SettingsRepository extends ChangeNotifier {
   Future<void> _save() => writeJsonFile(_file, {
         'customCountries': _customCountries,
         'customTags': _customTags.map((t) => t.toJson()).toList(),
+        'tyreNameOffset': _tyreNameOffset,
       });
 }

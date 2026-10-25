@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
 import '../data/models/card_project.dart';
+import '../data/models/photo_fill.dart';
 import '../data/models/photo_transform.dart';
 import '../data/repositories/app_store.dart';
 import '../templates/template_spec.dart';
@@ -23,6 +25,7 @@ class EditorController extends ChangeNotifier {
 
   Timer? _saveTimer;
   double _gestureStartScale = 1;
+  double _gestureStartRotation = 0;
 
   File? get photoFile => store.photos.fileOf(project.photoId);
   File? get logoFile => store.logos.fileOf(project.logoId);
@@ -39,7 +42,7 @@ class EditorController extends ChangeNotifier {
   }
 
   // ---- photo ----
-  /// Replace or remove (null) the photo; the crop is reset because a new
+  /// Replace or remove (null) the photo; the framing is reset because a new
   /// photo has different proportions.
   void setPhoto(String? id) => update((p) {
         p.photoId = id;
@@ -54,16 +57,29 @@ class EditorController extends ChangeNotifier {
 
   void setLogoScale(double scale) => update((p) => p.logoScale = scale);
 
-  void setPhotoScale(double scale) => update((p) {
-        final t = p.photoTransform;
-        p.photoTransform = PhotoTransform(scale: scale, dx: t.dx, dy: t.dy).clamped();
+  void setPhotoScale(double scale) =>
+      update((p) => p.photoTransform = p.photoTransform.copyWith(scale: scale).clamped());
+
+  void setPhotoRotation(double radians) =>
+      update((p) => p.photoTransform = p.photoTransform.copyWith(rotation: radians).clamped());
+
+  void rotatePhotoBy(double radians) => update((p) {
+        p.photoTransform =
+            p.photoTransform.copyWith(rotation: p.photoTransform.rotation + radians).clamped();
       });
+
+  void setPhotoFill(PhotoFill fill) => update((p) => p.photoFill = fill);
 
   void resetPhotoTransform() => update((p) => p.photoTransform = PhotoTransform.identity);
 
-  void gestureStart() => _gestureStartScale = project.photoTransform.scale;
+  void gestureStart() {
+    _gestureStartScale = project.photoTransform.scale;
+    _gestureStartRotation = project.photoTransform.rotation;
+  }
 
-  void gestureUpdate(double scaleFactor, Offset delta, double displayScale) {
+  /// [scaleFactor] and [rotation] are relative to the start of the gesture,
+  /// [delta] is the finger movement since the last update (screen pixels).
+  void gestureUpdate(double scaleFactor, double rotation, Offset delta, double displayScale) {
     if (project.photoId == null) return;
     update((p) {
       final t = p.photoTransform;
@@ -71,6 +87,7 @@ class EditorController extends ChangeNotifier {
         scale: _gestureStartScale * scaleFactor,
         dx: t.dx + delta.dx / displayScale / template.width,
         dy: t.dy + delta.dy / displayScale / template.height,
+        rotation: _gestureStartRotation + rotation,
       ).clamped();
     });
   }
@@ -86,3 +103,7 @@ class EditorController extends ChangeNotifier {
     super.dispose();
   }
 }
+
+/// Degrees <-> radians helpers for the rotation slider.
+double radiansToDegrees(double radians) => radians * 180 / math.pi;
+double degreesToRadians(double degrees) => degrees * math.pi / 180;

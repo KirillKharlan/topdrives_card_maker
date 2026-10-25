@@ -16,7 +16,7 @@ class PreviewPane extends StatelessWidget {
       final displayScale = box.maxWidth / c.template.width;
       return GestureDetector(
         onScaleStart: (_) => c.gestureStart(),
-        onScaleUpdate: (d) => c.gestureUpdate(d.scale, d.focalPointDelta, displayScale),
+        onScaleUpdate: (d) => c.gestureUpdate(d.scale, d.rotation, d.focalPointDelta, displayScale),
         child: FittedBox(
           fit: BoxFit.fitWidth,
           child: CardComposition(

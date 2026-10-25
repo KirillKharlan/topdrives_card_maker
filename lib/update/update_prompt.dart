@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/layout_tweaks.dart';
+import '../data/repositories/settings_repository.dart';
 import 'update_checker.dart';
 
 /// Checks for a newer release and tells the user. With [manual] = false
@@ -62,14 +64,46 @@ Future<void> _showUpdateDialog(BuildContext context, UpdateInfo info) {
 }
 
 /// "About" dialog: current version and a manual update check.
-Future<void> showAppInfoDialog(BuildContext context) async {
+Future<void> showAppInfoDialog(BuildContext context, SettingsRepository settings) async {
   final info = await PackageInfo.fromPlatform();
   if (!context.mounted) return;
   await showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
       title: const Text('Card Maker'),
-      content: Text('Version ${info.version} (build ${info.buildNumber})'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Version ${info.version} (build ${info.buildNumber})'),
+          const SizedBox(height: 16),
+          const Text('Fine-tune: tyre name height'),
+          ValueListenableBuilder<double>(
+            valueListenable: LayoutTweaks.tyreNameOffset,
+            builder: (context, offset, _) => Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: offset.clamp(-5.0, 5.0).toDouble(),
+                    min: -5,
+                    max: 5,
+                    divisions: 40,
+                    label: offset.toStringAsFixed(2),
+                    onChanged: (v) => LayoutTweaks.tyreNameOffset.value = v,
+                    onChangeEnd: settings.setTyreNameOffset,
+                  ),
+                ),
+                SizedBox(width: 44, child: Text(offset.toStringAsFixed(2))),
+              ],
+            ),
+          ),
+          Text(
+            'Plus moves the name down, minus up. Use it if the name is not level '
+            'with the T of "Tyres".',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext),
