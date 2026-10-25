@@ -14,12 +14,14 @@ class TextSection extends StatelessWidget {
     String value,
     void Function(String) onChanged, {
     TextInputType? keyboard,
+    String? helper,
   }) {
     return TextFormField(
       initialValue: value,
       keyboardType: keyboard,
       decoration: InputDecoration(
         labelText: label,
+        helperText: helper,
         border: const OutlineInputBorder(),
         isDense: true,
       ),
@@ -62,7 +64,13 @@ class TextSection extends StatelessWidget {
         _row([
           _field('Top speed', p.topSpeed, (v) => c.update((x) => x.topSpeed = v),
               keyboard: number),
-          _field('0-60', p.accel, (v) => c.update((x) => x.accel = v), keyboard: decimal),
+          _field(
+            '0-60',
+            p.accel,
+            (v) => c.update((x) => x.accel = v),
+            keyboard: decimal,
+            helper: p.accelIsNotApplicable ? 'Shown as N/A (top speed is below 60)' : null,
+          ),
           _field('Handling', p.handling, (v) => c.update((x) => x.handling = v),
               keyboard: number),
         ]),

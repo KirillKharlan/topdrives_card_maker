@@ -14,15 +14,15 @@ class CardProject {
     this.logoScale = 1.0,
     this.brand = 'Brand',
     this.model = 'Model',
-    this.year = '2020',
+    this.year = '',
     this.country = 'DE',
-    this.topSpeed = '150',
-    this.accel = '5.0',
-    this.handling = '75',
+    this.topSpeed = '',
+    this.accel = '',
+    this.handling = '',
     this.drive = 'RWD',
     this.tyre = 'Standard',
     this.carClass = 'B',
-    this.rq = '50',
+    this.rq = '',
     this.prize = false,
     this.prizeText = defaultPrizeText,
     List<CardTag>? tags,
@@ -61,6 +61,15 @@ class CardProject {
   /// Tags shown above the card, left to right (ready-made or custom).
   List<CardTag> tags;
   DateTime updatedAt;
+
+  /// A car whose top speed is below 60 mph never reaches 60 mph, the game
+  /// then shows N/A instead of the acceleration time.
+  bool get accelIsNotApplicable {
+    final speed = double.tryParse(topSpeed.trim().replaceAll(',', '.'));
+    return speed != null && speed < 60;
+  }
+
+  String get accelDisplay => accelIsNotApplicable ? 'N/A' : accel;
 
   Map<String, dynamic> toJson() => {
         'id': id,

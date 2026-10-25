@@ -61,7 +61,7 @@ class CardView extends StatelessWidget {
             FieldText(scale: t.textScale, rect: t.field('year'), parts: [(project.year, false)]),
             FieldText(scale: t.textScale, rect: t.field('country'), parts: [(project.country, true)]),
             FieldText(scale: t.textScale, rect: t.field('topSpeed'), parts: [(project.topSpeed, true)]),
-            FieldText(scale: t.textScale, rect: t.field('accel'), parts: [(project.accel, true)]),
+            FieldText(scale: t.textScale, rect: t.field('accel'), parts: [(project.accelDisplay, true)]),
             FieldText(scale: t.textScale, rect: t.field('handling'), parts: [(project.handling, true)]),
             // The frame already contains "WD"; we add only R / F / 4.
             FieldText(scale: t.textScale, rect: t.field('drivePrefix'), parts: [(drivePrefix, true)]),

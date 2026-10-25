@@ -11,6 +11,16 @@ class CardTag {
 
   bool get isCustom => asset == null;
 
+  @override
+  bool operator ==(Object other) =>
+      other is CardTag &&
+      other.asset == asset &&
+      other.text == text &&
+      other.colorValue == colorValue;
+
+  @override
+  int get hashCode => Object.hash(asset, text, colorValue);
+
   CardTag copyWith({String? text, int? colorValue}) =>
       CardTag(text: text ?? this.text, colorValue: colorValue ?? this.colorValue);
 
