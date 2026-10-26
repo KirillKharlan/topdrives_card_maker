@@ -5,6 +5,8 @@ import 'package:path_provider/path_provider.dart';
 import '../../templates/template_registry.dart';
 import '../../templates/template_spec.dart';
 import '../models/card_project.dart';
+import '../models/photo_fill.dart';
+import 'fill_store.dart';
 import 'media_library.dart';
 import 'project_repository.dart';
 import 'settings_repository.dart';
@@ -15,6 +17,7 @@ class AppStore {
 
   final photos = MediaLibrary('photos');
   final logos = MediaLibrary('logos');
+  final fills = FillStore();
   final projects = ProjectRepository();
   final settings = SettingsRepository();
   final Map<String, TemplateSpec> templates = {};
@@ -32,6 +35,7 @@ class AppStore {
     await store.photos.init(root);
     step('Loading logos…');
     await store.logos.init(root);
+    await store.fills.init(root);
     step('Loading cards…');
     await store.projects.init(root);
     step('Loading settings…');
@@ -43,6 +47,21 @@ class AppStore {
 
   TemplateSpec templateFor(CardProject project) =>
       templates[project.templateId] ?? templates.values.first;
+
+  /// The generated content-aware fill for [project], if it exists and still
+  /// matches the current framing.
+  File? smartFillFor(CardProject project) {
+    final name = project.fillFileName;
+    if (project.photoFill != PhotoFill.smart || name == null) return null;
+    if (project.fillSignature != project.fillSignatureNow) return null;
+    final file = fills.fileOf(name);
+    return file.existsSync() ? file : null;
+  }
+
+  Future<void> deleteProject(CardProject project) async {
+    await fills.delete(project.fillFileName);
+    await projects.delete(project.id);
+  }
 
   Future<void> deletePhoto(String id) async {
     await projects.detachPhoto(id);

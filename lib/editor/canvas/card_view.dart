@@ -20,6 +20,7 @@ class CardView extends StatelessWidget {
     this.photoFile,
     this.logoFile,
     this.photoMaxWidth = 2600,
+    this.fillFile,
   });
 
   final CardProject project;
@@ -29,6 +30,9 @@ class CardView extends StatelessWidget {
 
   /// Photo decode width; small cards (the home grid) use a lower value.
   final int photoMaxWidth;
+
+  /// The current content-aware fill picture, if any.
+  final File? fillFile;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +59,7 @@ class CardView extends StatelessWidget {
                   fill: project.photoFill,
                   background: t.photoBackground,
                   maxWidth: photoMaxWidth,
+                  smartFill: fillFile,
                 ),
               ),
             // Frosted glass: blur the photo behind the semi-transparent parts of the frame.

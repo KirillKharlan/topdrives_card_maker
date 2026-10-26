@@ -160,6 +160,43 @@ class MediaSection extends StatelessWidget {
                     ),
                 ],
               ),
+              if (p.photoFill == PhotoFill.smart) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    FilledButton.icon(
+                      onPressed: controller.generatingFill
+                          ? null
+                          : () async {
+                              final message = await controller.generateSmartFill();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(SnackBar(content: Text(message)));
+                              }
+                            },
+                      icon: controller.generatingFill
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.auto_awesome),
+                      label: Text(controller.generatingFill ? 'Filling…' : 'Generate fill'),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        controller.fillIsCurrent
+                            ? 'Fill is up to date.'
+                            : controller.hasGeneratedFill
+                                ? 'The framing changed: generate the fill again (until then the mirror mode is shown).'
+                                : 'Set the framing first, then press Generate fill (takes a few seconds).',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 4),
               Text(
                 'Drag, pinch and twist (two fingers) on the card to frame the photo. '

@@ -18,6 +18,7 @@ class CardComposition extends StatelessWidget {
     required this.template,
     this.photoFile,
     this.logoFile,
+    this.fillFile,
     this.cardKey,
     this.fullKey,
   });
@@ -26,6 +27,7 @@ class CardComposition extends StatelessWidget {
   final TemplateSpec template;
   final File? photoFile;
   final File? logoFile;
+  final File? fillFile;
   final GlobalKey? cardKey;
   final GlobalKey? fullKey;
 
@@ -50,6 +52,7 @@ class CardComposition extends StatelessWidget {
                   template: template,
                   photoFile: photoFile,
                   logoFile: logoFile,
+                  fillFile: fillFile,
                 ),
               ),
               if (project.prize) PrizeStrip(project: project, template: template),

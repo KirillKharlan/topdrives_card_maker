@@ -1,5 +1,10 @@
 /// What is drawn where the photo does not reach the edges of the card.
 enum PhotoFill {
+  /// Content-aware fill: the missing area is built from patches of the photo
+  /// itself (press "Generate fill" once the framing is final). Until it is
+  /// generated, or after the framing changes, the mirror mode is shown.
+  smart('Content-aware'),
+
   /// The photo is mirrored beyond its edges and blurred: sky, road and grass
   /// simply "continue".
   mirror('Mirror + blur'),

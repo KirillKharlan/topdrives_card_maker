@@ -3,8 +3,8 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -35,6 +35,7 @@ class CardExporter {
     required PhotoTransform transform,
     required PhotoFill fill,
     required Color background,
+    File? smartFillFile,
     required double cardWidth,
     required double cardHeight,
     int maxWidth = 4096,
@@ -69,7 +70,22 @@ class CardExporter {
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
       canvas.scale(outWidth / cardWidth);
-      paintPhoto(canvas, Size(cardWidth, cardHeight), image, transform, fill, background);
+      ui.Image? smartFill;
+      if (smartFillFile != null && fill == PhotoFill.smart) {
+        final codec = await ui.instantiateImageCodec(await smartFillFile.readAsBytes());
+        smartFill = (await codec.getNextFrame()).image;
+        codec.dispose();
+      }
+      paintPhoto(
+        canvas,
+        Size(cardWidth, cardHeight),
+        image,
+        transform,
+        fill,
+        background,
+        smartFill: smartFill,
+      );
+      smartFill?.dispose();
       final picture = recorder.endRecording();
       final out = await picture.toImage(outWidth, outHeight);
       final data = await out.toByteData(format: ui.ImageByteFormat.png);

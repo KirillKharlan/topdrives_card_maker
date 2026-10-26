@@ -24,6 +24,7 @@ class PreviewPane extends StatelessWidget {
             template: c.template,
             photoFile: c.photoFile,
             logoFile: c.logoFile,
+            fillFile: c.smartFillFile,
             cardKey: c.cardKey,
             fullKey: c.fullKey,
           ),

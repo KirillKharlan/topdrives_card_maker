@@ -46,6 +46,7 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
               transform: c.project.photoTransform,
               fill: c.project.photoFill,
               background: c.template.photoBackground,
+              smartFillFile: c.smartFillFile,
               cardWidth: c.template.width,
               cardHeight: c.template.height,
             );

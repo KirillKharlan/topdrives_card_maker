@@ -44,7 +44,7 @@ class ProjectTile extends StatelessWidget {
                   title: 'Delete card?',
                   message: '"${project.name}" will be removed. Library images are kept.',
                 );
-                if (ok) await store.projects.delete(project.id);
+                if (ok) await store.deleteProject(project);
               },
             ),
           ],
@@ -75,6 +75,7 @@ class ProjectTile extends StatelessWidget {
                       photoFile: store.photos.fileOf(project.photoId),
                       logoFile: store.logos.fileOf(project.logoId),
                       photoMaxWidth: 700,
+                      fillFile: store.smartFillFor(project),
                     ),
                   ),
                 ),

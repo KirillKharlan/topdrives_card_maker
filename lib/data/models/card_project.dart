@@ -11,7 +11,9 @@ class CardProject {
     this.templateId = 'standard',
     this.photoId,
     this.photoTransform = PhotoTransform.identity,
-    this.photoFill = PhotoFill.mirror,
+    this.photoFill = PhotoFill.smart,
+    this.fillFileName,
+    this.fillSignature,
     this.logoId,
     this.logoScale = 1.0,
     this.brand = 'Brand',
@@ -44,6 +46,10 @@ class CardProject {
   String? photoId;
   PhotoTransform photoTransform;
   PhotoFill photoFill;
+
+  /// The generated content-aware fill and the framing it was made for.
+  String? fillFileName;
+  String? fillSignature;
   String? logoId;
 
   /// Logo size inside its slot on the card (1.0 = fit the slot).
@@ -67,6 +73,14 @@ class CardProject {
 
   /// A car whose top speed is below 60 mph never reaches 60 mph, the game
   /// then shows N/A instead of the acceleration time.
+  /// Identifies the framing a content-aware fill belongs to; a fill is only
+  /// used while this still matches.
+  String get fillSignatureNow {
+    String r(double v) => v.toStringAsFixed(4);
+    final t = photoTransform;
+    return '$photoId|${r(t.scale)}|${r(t.dx)}|${r(t.dy)}|${r(t.rotation)}';
+  }
+
   bool get accelIsNotApplicable {
     final speed = double.tryParse(topSpeed.trim().replaceAll(',', '.'));
     return speed != null && speed < 60;
@@ -81,6 +95,8 @@ class CardProject {
         'photoId': photoId,
         'photoTransform': photoTransform.toJson(),
         'photoFill': photoFill.name,
+        'fillFileName': fillFileName,
+        'fillSignature': fillSignature,
         'logoId': logoId,
         'logoScale': logoScale,
         'brand': brand,
@@ -121,6 +137,8 @@ class CardProject {
       photoId: j['photoId'] as String?,
       photoTransform: PhotoTransform.fromJson(j['photoTransform'] as Map<String, dynamic>?),
       photoFill: parsePhotoFill(j['photoFill'] as String?),
+      fillFileName: j['fillFileName'] as String?,
+      fillSignature: j['fillSignature'] as String?,
       logoId: j['logoId'] as String?,
       logoScale: (j['logoScale'] as num?)?.toDouble() ?? 1.0,
       brand: s('brand', ''),

@@ -8,6 +8,7 @@ import '../data/models/card_project.dart';
 import '../data/models/photo_fill.dart';
 import '../data/models/photo_transform.dart';
 import '../data/repositories/app_store.dart';
+import '../photo_fill/fill_service.dart';
 import '../templates/template_spec.dart';
 
 /// State of the card being edited. All changes go through [update], which
@@ -30,6 +31,15 @@ class EditorController extends ChangeNotifier {
   File? get photoFile => store.photos.fileOf(project.photoId);
   File? get logoFile => store.logos.fileOf(project.logoId);
 
+  /// The content-aware fill picture, if it exists and matches the framing.
+  File? get smartFillFile => store.smartFillFor(project);
+
+  bool generatingFill = false;
+
+  bool get hasGeneratedFill => project.fillFileName != null;
+
+  bool get fillIsCurrent => smartFillFile != null;
+
   void update(void Function(CardProject p) change) {
     change(project);
     project.updatedAt = DateTime.now();
@@ -44,10 +54,16 @@ class EditorController extends ChangeNotifier {
   // ---- photo ----
   /// Replace or remove (null) the photo; the framing is reset because a new
   /// photo has different proportions.
-  void setPhoto(String? id) => update((p) {
-        p.photoId = id;
-        p.photoTransform = PhotoTransform.identity;
-      });
+  void setPhoto(String? id) {
+    final oldFill = project.fillFileName;
+    update((p) {
+      p.photoId = id;
+      p.photoTransform = PhotoTransform.identity;
+      p.fillFileName = null;
+      p.fillSignature = null;
+    });
+    store.fills.delete(oldFill); // belonged to the previous photo
+  }
 
   /// A different logo has different proportions, so its size is reset.
   void setLogo(String? id) => update((p) {
@@ -71,6 +87,38 @@ class EditorController extends ChangeNotifier {
   void setPhotoFill(PhotoFill fill) => update((p) => p.photoFill = fill);
 
   void resetPhotoTransform() => update((p) => p.photoTransform = PhotoTransform.identity);
+
+  /// Builds the content-aware fill for the current framing (takes a few seconds).
+  /// Returns a message for the user.
+  Future<String> generateSmartFill() async {
+    final file = photoFile;
+    if (file == null) return 'Choose a photo first.';
+    generatingFill = true;
+    notifyListeners();
+    try {
+      final signature = project.fillSignatureNow;
+      final outcome = await FillService.generate(
+        file: file,
+        transform: project.photoTransform,
+        cardWidth: template.width,
+        cardHeight: template.height,
+      );
+      final png = outcome.png;
+      if (png == null) return outcome.message ?? 'Nothing was generated.';
+      final name = await store.fills.save(project.id, png, replacing: project.fillFileName);
+      update((p) {
+        p.photoFill = PhotoFill.smart;
+        p.fillFileName = name;
+        p.fillSignature = signature;
+      });
+      return 'Fill generated.';
+    } catch (e) {
+      return 'Fill failed: $e';
+    } finally {
+      generatingFill = false;
+      notifyListeners();
+    }
+  }
 
   void gestureStart() {
     _gestureStartScale = project.photoTransform.scale;

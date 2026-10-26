@@ -19,8 +19,9 @@ void paintPhoto(
   ui.Image image,
   PhotoTransform transform,
   PhotoFill fill,
-  Color background,
-) {
+  Color background, {
+  ui.Image? smartFill,
+}) {
   final t = transform.clamped();
   final cardRect = Offset.zero & size;
   final iw = image.width.toDouble();
@@ -59,7 +60,18 @@ void paintPhoto(
   final maxY = corners.map((c) => c.dy).reduce(math.max);
   final covered = minX >= -w / 2 && maxX <= w / 2 && minY >= -h / 2 && maxY <= h / 2;
 
-  if (!covered && fill == PhotoFill.blur) {
+  // Content-aware fill needs the generated picture; without it (or after the
+  // framing changed) the mirror mode stands in.
+  final effectiveFill = (fill == PhotoFill.smart && smartFill == null) ? PhotoFill.mirror : fill;
+
+  if (!covered && effectiveFill == PhotoFill.smart) {
+    canvas.drawImageRect(
+      smartFill!,
+      Rect.fromLTWH(0, 0, smartFill.width.toDouble(), smartFill.height.toDouble()),
+      cardRect,
+      quality,
+    );
+  } else if (!covered && effectiveFill == PhotoFill.blur) {
     canvas.saveLayer(
       cardRect,
       Paint()
@@ -80,7 +92,7 @@ void paintPhoto(
       quality,
     );
     canvas.restore();
-  } else if (!covered && fill == PhotoFill.mirror) {
+  } else if (!covered && effectiveFill == PhotoFill.mirror) {
     final iMin = (minX / w + 0.5).floor().clamp(-4, 4).toInt();
     final iMax = (maxX / w + 0.5).floor().clamp(-4, 4).toInt();
     final jMin = (minY / h + 0.5).floor().clamp(-4, 4).toInt();
@@ -124,21 +136,24 @@ class PhotoPainter extends CustomPainter {
     required this.transform,
     required this.fill,
     required this.background,
+    this.smartFill,
   });
 
   final ui.Image image;
   final PhotoTransform transform;
   final PhotoFill fill;
   final Color background;
+  final ui.Image? smartFill;
 
   @override
   void paint(Canvas canvas, Size size) =>
-      paintPhoto(canvas, size, image, transform, fill, background);
+      paintPhoto(canvas, size, image, transform, fill, background, smartFill: smartFill);
 
   @override
   bool shouldRepaint(PhotoPainter old) =>
       old.image != image ||
       old.transform != transform ||
       old.fill != fill ||
+      old.smartFill != smartFill ||
       old.background != background;
 }
