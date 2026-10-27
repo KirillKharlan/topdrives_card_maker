@@ -69,9 +69,27 @@ class EditorController extends ChangeNotifier {
   void setLogo(String? id) => update((p) {
         p.logoId = id;
         p.logoScale = 1.0;
+        p.logoDx = 0.0;
+        p.logoDy = 0.0;
       });
 
   void setLogoScale(double scale) => update((p) => p.logoScale = scale);
+
+  /// Shifts the logo inside its slot by fractions of the slot size.
+  void moveLogoBy(double dx, double dy) => update((p) {
+        p.logoDx = (p.logoDx + dx).clamp(-0.6, 0.6).toDouble();
+        p.logoDy = (p.logoDy + dy).clamp(-0.6, 0.6).toDouble();
+      });
+
+  void resetLogoFraming() => update((p) {
+        p.logoScale = 1.0;
+        p.logoDx = 0.0;
+        p.logoDy = 0.0;
+      });
+
+  void setTitleScale(double v) => update((p) => p.titleScale = v);
+  void setYearScale(double v) => update((p) => p.yearScale = v);
+  void setTagScale(double v) => update((p) => p.tagScale = v);
 
   void setPhotoScale(double scale) =>
       update((p) => p.photoTransform = p.photoTransform.copyWith(scale: scale).clamped());
@@ -98,7 +116,7 @@ class EditorController extends ChangeNotifier {
     try {
       final signature = project.fillSignatureNow;
       final outcome = await FillService.generate(
-        file: file,
+        photo: file,
         transform: project.photoTransform,
         cardWidth: template.width,
         cardHeight: template.height,

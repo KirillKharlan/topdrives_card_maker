@@ -4,6 +4,7 @@ import '../editor_controller.dart';
 import 'extras_section.dart';
 import 'media_section.dart';
 import 'options_section.dart';
+import 'size_section.dart';
 import 'text_section.dart';
 
 /// The scrollable form under the preview. One section per concern.
@@ -21,6 +22,7 @@ class FieldsPanel extends StatelessWidget {
         children: [
           MediaSection(controller: controller),
           TextSection(controller: controller),
+          SizeSection(controller: controller),
           OptionsSection(controller: controller),
           ExtrasSection(controller: controller),
         ],

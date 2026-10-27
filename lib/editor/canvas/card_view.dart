@@ -90,11 +90,16 @@ class CardView extends StatelessWidget {
               ),
             ),
             if (logoFile != null) _logo(),
-            FieldText(scale: t.textScale, 
+            FieldText(
+              scale: t.textScale * project.titleScale,
               rect: t.field('title'),
               parts: [('${project.brand} ', true), (project.model, false)],
             ),
-            FieldText(scale: t.textScale, rect: t.field('year'), parts: [(project.year, false)]),
+            FieldText(
+              scale: t.textScale * project.yearScale,
+              rect: t.field('year'),
+              parts: [(project.year, false)],
+            ),
             FieldText(scale: t.textScale, rect: t.field('country'), parts: [(project.country, true)]),
             FieldText(scale: t.textScale, rect: t.field('topSpeed'), parts: [(project.topSpeed, true)]),
             FieldText(scale: t.textScale, rect: t.field('accel'), parts: [(project.accelDisplay, true)]),
@@ -124,7 +129,13 @@ class CardView extends StatelessWidget {
       top: l.y,
       width: l.w,
       height: l.h,
-      child: LogoTile(file: logoFile!, scale: project.logoScale, padding: l.padding),
+      child: LogoTile(
+        file: logoFile!,
+        scale: project.logoScale,
+        padding: l.padding,
+        dx: project.logoDx,
+        dy: project.logoDy,
+      ),
     );
   }
 }

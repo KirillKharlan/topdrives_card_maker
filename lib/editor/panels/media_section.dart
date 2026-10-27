@@ -7,6 +7,7 @@ import '../../data/models/media_item.dart';
 import '../../data/models/photo_fill.dart';
 import '../../data/models/photo_transform.dart';
 import '../../logo_editor/logo_editor_screen.dart';
+import '../../logo_editor/logo_trimmer.dart';
 import '../../ui/library/library_screen.dart';
 import '../canvas/logo_tile.dart';
 import '../editor_controller.dart';
@@ -62,6 +63,23 @@ class MediaSection extends StatelessWidget {
       MaterialPageRoute(builder: (_) => LogoEditorScreen(file: file)),
     );
     if (png == null) return;
+    final item = await controller.store.logos.addFromBytes(png);
+    controller.setLogo(item.id);
+  }
+
+  /// Cuts the empty margins off the logo picture (so the logo itself sits in the
+  /// middle of its slot). The result is saved as a new logo; the original stays.
+  Future<void> _autoCenterLogo(BuildContext context) async {
+    final file = controller.logoFile;
+    if (file == null) return;
+    final png = await trimLogoMargins(file);
+    if (!context.mounted) return;
+    if (png == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('The logo has no extra margins to trim.')),
+      );
+      return;
+    }
     final item = await controller.store.logos.addFromBytes(png);
     controller.setLogo(item.id);
   }
@@ -213,7 +231,16 @@ class MediaSection extends StatelessWidget {
               // Same size ratio as the logo slot on the card, so what you see
               // here is what ends up on the card.
               Center(
-                child: SizedBox(
+                child: GestureDetector(
+                  // Drag the logo inside its slot.
+                  onPanUpdate: (d) {
+                    final factor = 220 / logoSlot.w;
+                    controller.moveLogoBy(
+                      d.delta.dx / factor / logoSlot.w,
+                      d.delta.dy / factor / logoSlot.h,
+                    );
+                  },
+                  child: SizedBox(
                   width: 220,
                   child: FittedBox(
                     child: SizedBox(
@@ -225,10 +252,20 @@ class MediaSection extends StatelessWidget {
                           file: logoFile,
                           scale: p.logoScale,
                           padding: logoSlot.padding,
+                          dx: p.logoDx,
+                          dy: p.logoDy,
                         ),
                       ),
                     ),
                   ),
+                ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Drag the logo to centre it, use the slider for its size.',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
               Row(
@@ -243,7 +280,7 @@ class MediaSection extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => controller.setLogoScale(1.0),
+                    onPressed: controller.resetLogoFraming,
                     child: const Text('Reset'),
                   ),
                 ],
@@ -268,6 +305,12 @@ class MediaSection extends StatelessWidget {
                     onPressed: () => _removeLogoBackground(context),
                     icon: const Icon(Icons.auto_fix_high),
                     label: const Text('Remove background'),
+                  ),
+                if (hasLogo)
+                  OutlinedButton.icon(
+                    onPressed: () => _autoCenterLogo(context),
+                    icon: const Icon(Icons.center_focus_strong_outlined),
+                    label: const Text('Trim margins'),
                   ),
                 if (hasLogo)
                   OutlinedButton.icon(

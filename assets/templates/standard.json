@@ -26,7 +26,7 @@
   },
   "extras": {
     "backdrop": "#1E1E1E",
-    "tagHeight": 50,
+    "tagHeight": 64,
     "tagPaddingLeft": 4,
     "tagPaddingTop": 8,
     "prizeStripHeight": 148,
@@ -35,8 +35,8 @@
     "prizeGap": 22,
     "prizeTextSize": 41,
     "prizeTextWidth": 560,
-    "tagPaddingBottom": 12,
-    "tagGap": 10,
+    "tagPaddingBottom": 14,
+    "tagGap": 12,
     "prizeLetterSpacing": 2.4,
     "prizeTextStroke": 1.4
   },
@@ -46,7 +46,7 @@
       "y": 12,
       "w": 890,
       "h": 68,
-      "size": 50,
+      "size": 55,
       "align": "left"
     },
     "year": {
@@ -54,7 +54,7 @@
       "y": 13,
       "w": 112,
       "h": 68,
-      "size": 52,
+      "size": 46,
       "align": "right"
     },
     "country": {

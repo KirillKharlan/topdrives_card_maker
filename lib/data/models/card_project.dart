@@ -16,6 +16,11 @@ class CardProject {
     this.fillSignature,
     this.logoId,
     this.logoScale = 1.0,
+    this.logoDx = 0.0,
+    this.logoDy = 0.0,
+    this.titleScale = 1.0,
+    this.yearScale = 1.0,
+    this.tagScale = 1.0,
     this.brand = 'Brand',
     this.model = 'Model',
     this.year = '',
@@ -54,6 +59,15 @@ class CardProject {
 
   /// Logo size inside its slot on the card (1.0 = fit the slot).
   double logoScale;
+
+  /// Logo shift inside its slot, as a fraction of the slot size.
+  double logoDx;
+  double logoDy;
+
+  /// Per-card size multipliers (1.0 = the template's size).
+  double titleScale;
+  double yearScale;
+  double tagScale;
   String brand;
   String model;
   String year;
@@ -99,6 +113,11 @@ class CardProject {
         'fillSignature': fillSignature,
         'logoId': logoId,
         'logoScale': logoScale,
+        'logoDx': logoDx,
+        'logoDy': logoDy,
+        'titleScale': titleScale,
+        'yearScale': yearScale,
+        'tagScale': tagScale,
         'brand': brand,
         'model': model,
         'year': year,
@@ -141,6 +160,11 @@ class CardProject {
       fillSignature: j['fillSignature'] as String?,
       logoId: j['logoId'] as String?,
       logoScale: (j['logoScale'] as num?)?.toDouble() ?? 1.0,
+      logoDx: (j['logoDx'] as num?)?.toDouble() ?? 0.0,
+      logoDy: (j['logoDy'] as num?)?.toDouble() ?? 0.0,
+      titleScale: (j['titleScale'] as num?)?.toDouble() ?? 1.0,
+      yearScale: (j['yearScale'] as num?)?.toDouble() ?? 1.0,
+      tagScale: (j['tagScale'] as num?)?.toDouble() ?? 1.0,
       brand: s('brand', ''),
       model: s('model', ''),
       year: s('year', ''),

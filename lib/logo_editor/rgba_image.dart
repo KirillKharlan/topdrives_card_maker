@@ -43,6 +43,17 @@ class RgbaImage {
     }
   }
 
+  /// The part from ([x0],[y0]) up to but not including ([x1],[y1]).
+  RgbaImage crop(int x0, int y0, int x1, int y1) {
+    final w = x1 - x0, h = y1 - y0;
+    final out = Uint8List(w * h * 4);
+    for (var y = 0; y < h; y++) {
+      final from = ((y0 + y) * width + x0) * 4;
+      out.setRange(y * w * 4, (y + 1) * w * 4, data, from);
+    }
+    return RgbaImage(w, h, out);
+  }
+
   Future<ui.Image> toUiImage() {
     final completer = Completer<ui.Image>();
     ui.decodeImageFromPixels(data, width, height, ui.PixelFormat.rgba8888, completer.complete);

@@ -33,12 +33,12 @@ class TagStrip extends StatelessWidget {
                 CustomTagView(
                   text: tag.text ?? '',
                   colorValue: tag.colorValue ?? 0xFFF2C21B,
-                  height: ex.tagHeight,
+                  height: ex.tagHeight * project.tagScale,
                 )
               else
                 Image.asset(
                   tag.asset!,
-                  height: ex.tagHeight,
+                  height: ex.tagHeight * project.tagScale,
                   filterQuality: FilterQuality.high,
                   errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
