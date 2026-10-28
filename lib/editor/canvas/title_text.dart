@@ -121,17 +121,17 @@ class TitleLayout {
       }
     }
 
-    // One line: model and brand stand on the style's baseline. Two lines: the
-    // block of two lines keeps the same vertical centre as one line of capitals,
-    // the brand stands on the middle between the two model baselines.
-    var brandBaseline = style.baseline;
-    var modelBaselines = <double>[style.baseline];
+    // Everything is centred on one line through the middle of the capitals, so a
+    // brand of any size stays centred against the model, one line or two. The
+    // style's baseline fixes that centre for the template's brand size.
+    final capCentre = style.baseline - _halfCap * style.brandSize * textScale;
+    final brandBaseline = capCentre + _halfCap * brandSize;
+    var modelBaselines = <double>[capCentre + _halfCap * modelSize];
     if (lines.length == 2) {
-      final capCentre = style.baseline - _halfCap * style.brandSize * textScale;
-      final middle = capCentre + _halfCap * modelSize;
-      final pitch = style.lineHeight * modelSize;
-      brandBaseline = middle;
-      modelBaselines = [middle - pitch / 2, middle + pitch / 2];
+      // The block from the capitals of line one to the baseline of line two is
+      // centred on that line.
+      final first = capCentre - style.lineHeight * modelSize / 2 + _halfCap * modelSize;
+      modelBaselines = [first, first + style.lineHeight * modelSize];
     }
     return TitleLayout(
       brandX: style.x,

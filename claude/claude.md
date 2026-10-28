@@ -55,6 +55,7 @@ claude/claude.md                 this file
   (regular, fits the rest of the line) on one baseline with `TextPainter`. Two looks per card (`CardProject.cardStyle`):
   `fan` and `game`. A look changes ONLY text sizes and the prize-marker position (user's explicit definition); wrapping of a
   long model is the same in both: shrink on one line down to `twoLineScale`, then wrap to 2 lines (brand centred between).
+  Brand and model are centred by cap height on one line (not baseline-aligned), also when the brand is scaled.
   Numbers in `standard.json` `titleStyles` / `prizeStyles.game`, measured from screenshots (fan 64.5, game brand 44 / model 46
   card units, baselines 68 / 62; game prize: trophy circle left 70, diameter 74, text left 173, two lines pitch 42.4).
   Fan two-line size (`twoLineScale` 0.7) is an estimate, there is no fan reference with two lines. Fan prize = `extras.prize*`.
