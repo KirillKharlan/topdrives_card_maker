@@ -26,6 +26,37 @@ class CustomTagView extends StatelessWidget {
     return Color.fromARGB(255, channel(16), channel(8), channel(0));
   }
 
+  /// Roboto Condensed has no medium weight: Regular drawn twice, the second time
+  /// with a thin outline of the same colour, gives the medium look of the game's tags.
+  Widget _label() {
+    final size = height * 0.53;
+    final spacing = height * 0.022;
+    Text build(TextStyle style) => Text(
+          text,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.ellipsis,
+          textScaler: TextScaler.noScaling,
+          style: style,
+        );
+    return Stack(
+      children: [
+        build(cardTextStyle(size, letterSpacing: spacing)),
+        build(
+          cardTextStyle(
+            size,
+            letterSpacing: spacing,
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = height * 0.018
+              ..strokeJoin = StrokeJoin.round
+              ..color = Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final border = height * 0.08;
@@ -44,16 +75,7 @@ class CustomTagView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Flexible(
-                child: Text(
-                  text,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  textScaler: TextScaler.noScaling,
-                  style: cardTextStyle(height * 0.53, bold: true, letterSpacing: height * 0.012),
-                ),
-              ),
+              Flexible(child: _label()),
             ],
           ),
         ),

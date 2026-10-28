@@ -38,20 +38,24 @@ class PrizeStrip extends StatelessWidget {
     final ex = template.extras;
     return SizedBox(
       width: template.width,
-      height: ex.prizeStripHeight,
       child: Padding(
-        padding: EdgeInsets.only(left: ex.prizePaddingLeft),
+        padding: EdgeInsets.only(
+          left: ex.prizePaddingLeft,
+          top: ex.prizePaddingTop,
+          bottom: ex.prizePaddingBottom,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // prize_car.png is a wide banner whose right part is empty;
-            // keep only the trophy (and the little "i").
+            // keep only the trophy (and the little "i"), without the empty shadow below.
             SizedBox(
-              height: ex.prizeIconHeight,
+              height: ex.prizeIconHeight * ex.prizeIconCrop,
               child: ClipRect(
                 child: Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: Alignment.topLeft,
                   widthFactor: template.prizeVisibleWidth,
+                  heightFactor: ex.prizeIconCrop,
                   child: Image.asset(
                     template.prizeBanner,
                     height: ex.prizeIconHeight,
@@ -62,9 +66,11 @@ class PrizeStrip extends StatelessWidget {
               ),
             ),
             SizedBox(width: ex.prizeGap),
-            SizedBox(
-              width: ex.prizeTextWidth,
-              child: _heavyText(ex),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: ex.prizeTextWidth),
+                child: _heavyText(ex),
+              ),
             ),
           ],
         ),

@@ -100,7 +100,9 @@ class ExtrasSpec {
     required this.tagPaddingTop,
     required this.tagPaddingBottom,
     required this.tagGap,
-    required this.prizeStripHeight,
+    required this.prizePaddingTop,
+    required this.prizePaddingBottom,
+    required this.prizeIconCrop,
     required this.prizeIconHeight,
     required this.prizePaddingLeft,
     required this.prizeGap,
@@ -112,7 +114,10 @@ class ExtrasSpec {
 
   final Color backdrop;
   final double tagHeight, tagPaddingLeft, tagPaddingTop, tagPaddingBottom, tagGap;
-  final double prizeStripHeight, prizeIconHeight, prizePaddingLeft, prizeGap;
+  final double prizePaddingTop, prizePaddingBottom, prizeIconHeight, prizePaddingLeft, prizeGap;
+
+  /// Fraction of the icon picture's height that is kept (the rest is empty shadow).
+  final double prizeIconCrop;
   final double prizeTextSize, prizeTextWidth;
 
   /// Extra spacing and outline width (card units) that make the prize text look heavier.
@@ -126,12 +131,14 @@ class ExtrasSpec {
         tagPaddingTop: _d(j['tagPaddingTop'] ?? 8),
         tagPaddingBottom: _d(j['tagPaddingBottom'] ?? 12),
         tagGap: _d(j['tagGap'] ?? 10),
-        prizeStripHeight: _d(j['prizeStripHeight'] ?? 148),
+        prizePaddingTop: _d(j['prizePaddingTop'] ?? 22),
+        prizePaddingBottom: _d(j['prizePaddingBottom'] ?? 2),
+        prizeIconCrop: _d(j['prizeIconCrop'] ?? 0.82),
         prizeIconHeight: _d(j['prizeIconHeight'] ?? 92),
-        prizePaddingLeft: _d(j['prizePaddingLeft'] ?? 68),
-        prizeGap: _d(j['prizeGap'] ?? 22),
+        prizePaddingLeft: _d(j['prizePaddingLeft'] ?? 0),
+        prizeGap: _d(j['prizeGap'] ?? 12),
         prizeTextSize: _d(j['prizeTextSize'] ?? 41),
-        prizeTextWidth: _d(j['prizeTextWidth'] ?? 560),
+        prizeTextWidth: _d(j['prizeTextWidth'] ?? 1000),
         prizeLetterSpacing: _d(j['prizeLetterSpacing'] ?? 2.4),
         prizeTextStroke: _d(j['prizeTextStroke'] ?? 1.4),
       );

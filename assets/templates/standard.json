@@ -22,31 +22,33 @@
     "y": 0,
     "w": 139,
     "h": 96,
-    "padding": 8
+    "padding": 3
   },
   "extras": {
-    "backdrop": "#1E1E1E",
-    "tagHeight": 64,
-    "tagPaddingLeft": 4,
-    "tagPaddingTop": 8,
-    "prizeStripHeight": 148,
+    "backdrop": "#000000",
+    "tagHeight": 55,
+    "tagPaddingLeft": 6,
+    "tagPaddingTop": 18,
     "prizeIconHeight": 92,
-    "prizePaddingLeft": 68,
-    "prizeGap": 22,
+    "prizePaddingLeft": 0,
+    "prizeGap": 12,
     "prizeTextSize": 41,
-    "prizeTextWidth": 560,
-    "tagPaddingBottom": 14,
-    "tagGap": 12,
+    "prizeTextWidth": 1000,
+    "tagPaddingBottom": 18,
+    "tagGap": 25,
     "prizeLetterSpacing": 2.4,
-    "prizeTextStroke": 1.4
+    "prizeTextStroke": 1.8,
+    "prizePaddingTop": 22,
+    "prizePaddingBottom": 2,
+    "prizeIconCrop": 0.82
   },
   "fields": {
     "title": {
-      "x": 154,
-      "y": 12,
+      "x": 158,
+      "y": 1,
       "w": 890,
-      "h": 68,
-      "size": 55,
+      "h": 90,
+      "size": 72.5,
       "align": "left"
     },
     "year": {
@@ -54,7 +56,7 @@
       "y": 13,
       "w": 112,
       "h": 68,
-      "size": 46,
+      "size": 52,
       "align": "right"
     },
     "country": {
@@ -111,11 +113,11 @@
       "y": 662,
       "w": 139,
       "h": 100,
-      "size": 96,
+      "size": 102,
       "align": "center"
     }
   },
-  "blurSigma": 12,
+  "blurSigma": 8,
   "blurRegions": [
     {
       "x": 143,
