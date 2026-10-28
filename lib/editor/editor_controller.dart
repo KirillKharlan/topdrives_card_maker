@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 import '../data/models/card_project.dart';
+import '../data/models/card_style.dart';
 import '../data/models/photo_fill.dart';
 import '../data/models/photo_transform.dart';
 import '../data/repositories/app_store.dart';
@@ -87,7 +88,9 @@ class EditorController extends ChangeNotifier {
         p.logoDy = 0.0;
       });
 
-  void setTitleScale(double v) => update((p) => p.titleScale = v);
+  void setBrandScale(double v) => update((p) => p.brandScale = v);
+  void setModelScale(double v) => update((p) => p.modelScale = v);
+  void setCardStyle(CardStyle style) => update((p) => p.cardStyle = style);
   void setYearScale(double v) => update((p) => p.yearScale = v);
   void setTagScale(double v) => update((p) => p.tagScale = v);
 

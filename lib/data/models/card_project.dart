@@ -1,3 +1,4 @@
+import 'card_style.dart';
 import 'card_tag.dart';
 import 'photo_fill.dart';
 import 'photo_transform.dart';
@@ -18,7 +19,9 @@ class CardProject {
     this.logoScale = 1.0,
     this.logoDx = 0.0,
     this.logoDy = 0.0,
-    this.titleScale = 1.0,
+    this.brandScale = 1.0,
+    this.modelScale = 1.0,
+    this.cardStyle = CardStyle.fan,
     this.yearScale = 1.0,
     this.tagScale = 1.0,
     this.brand = 'Brand',
@@ -64,10 +67,16 @@ class CardProject {
   double logoDx;
   double logoDy;
 
-  /// Per-card size multipliers (1.0 = the template's size).
-  double titleScale;
+  /// Per-card size multipliers (1.0 = the template's size). [brandScale] is the
+  /// exact brand size; [modelScale] is the largest size the model may have, a long
+  /// model is shrunk (or wrapped, in the game style) to fit.
+  double brandScale;
+  double modelScale;
   double yearScale;
   double tagScale;
+
+  /// Fan-made or official (game) look of the title.
+  CardStyle cardStyle;
   String brand;
   String model;
   String year;
@@ -115,7 +124,9 @@ class CardProject {
         'logoScale': logoScale,
         'logoDx': logoDx,
         'logoDy': logoDy,
-        'titleScale': titleScale,
+        'brandScale': brandScale,
+        'modelScale': modelScale,
+        'cardStyle': cardStyle.name,
         'yearScale': yearScale,
         'tagScale': tagScale,
         'brand': brand,
@@ -149,6 +160,7 @@ class CardProject {
     } else if (j['tagAsset'] is String) {
       tags.add(CardTag(asset: j['tagAsset'] as String));
     }
+    final legacyTitleScale = (j['titleScale'] as num?)?.toDouble() ?? 1.0;
     return CardProject(
       id: j['id'] as String,
       name: s('name', 'New card'),
@@ -162,7 +174,10 @@ class CardProject {
       logoScale: (j['logoScale'] as num?)?.toDouble() ?? 1.0,
       logoDx: (j['logoDx'] as num?)?.toDouble() ?? 0.0,
       logoDy: (j['logoDy'] as num?)?.toDouble() ?? 0.0,
-      titleScale: (j['titleScale'] as num?)?.toDouble() ?? 1.0,
+      // Cards saved before brand and model were split have one `titleScale`.
+      brandScale: (j['brandScale'] as num?)?.toDouble() ?? legacyTitleScale,
+      modelScale: (j['modelScale'] as num?)?.toDouble() ?? legacyTitleScale,
+      cardStyle: parseCardStyle(j['cardStyle'] as String?),
       yearScale: (j['yearScale'] as num?)?.toDouble() ?? 1.0,
       tagScale: (j['tagScale'] as num?)?.toDouble() ?? 1.0,
       brand: s('brand', ''),

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_constants.dart';
+import '../../data/models/card_style.dart';
 import '../../ui/common/dialogs.dart';
 import '../editor_controller.dart';
 import 'section_card.dart';
 
-/// Pick-one options: class, drive, tyres, country.
+/// Pick-one options: style, class, drive, tyres, country.
 class OptionsSection extends StatelessWidget {
   const OptionsSection({super.key, required this.controller});
 
@@ -70,6 +71,27 @@ class OptionsSection extends StatelessWidget {
     final p = c.project;
     return Column(
       children: [
+        SectionCard(
+          title: 'Style',
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final style in CardStyle.values)
+                  ChoiceChip(
+                    label: Text(style.label),
+                    selected: style == p.cardStyle,
+                    onSelected: (_) => c.setCardStyle(style),
+                  ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(p.cardStyle.hint, style: Theme.of(context).textTheme.bodySmall),
+            ),
+          ],
+        ),
         SectionCard(
           title: 'Class',
           children: [_chips(AppConstants.carClasses, p.carClass, (v) => c.update((x) => x.carClass = v))],

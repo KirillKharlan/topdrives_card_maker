@@ -9,6 +9,7 @@ import '../../templates/template_spec.dart';
 import 'field_text.dart';
 import 'logo_tile.dart';
 import 'photo_layer.dart';
+import 'title_text.dart';
 
 /// The card itself, drawn at the template's native size (e.g. 1338x828).
 /// Layers, bottom to top: background, photo, class frame, logo, texts.
@@ -90,10 +91,14 @@ class CardView extends StatelessWidget {
               ),
             ),
             if (logoFile != null) _logo(),
-            FieldText(
-              scale: t.textScale * project.titleScale,
-              rect: t.field('title'),
-              parts: [('${project.brand} ', true), (project.model, false)],
+            // Brand keeps its size; the model fits itself into the rest of the line.
+            TitleText(
+              brand: project.brand,
+              model: project.model,
+              style: t.titleStyle(project.cardStyle),
+              textScale: t.textScale,
+              brandScale: project.brandScale,
+              modelScale: project.modelScale,
             ),
             FieldText(
               scale: t.textScale * project.yearScale,

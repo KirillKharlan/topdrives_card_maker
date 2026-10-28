@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../editor_controller.dart';
 import 'section_card.dart';
 
-/// Per-card size of the brand/model line, the year and the tags (1.0 = template size).
+/// Per-card size of the brand, the model, the year and the tags (1.0 = template size).
 class SizeSection extends StatelessWidget {
   const SizeSection({super.key, required this.controller});
 
@@ -33,14 +33,24 @@ class SizeSection extends StatelessWidget {
     return SectionCard(
       title: 'Sizes',
       children: [
-        _slider('Brand + model', p.titleScale, c.setTitleScale),
+        _slider('Brand', p.brandScale, c.setBrandScale),
+        _slider('Model (max)', p.modelScale, c.setModelScale),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 4),
+          child: Text(
+            'The brand always keeps this size. The model is never larger than its size, '
+            'a long model gets smaller to fit.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
         _slider('Year', p.yearScale, c.setYearScale),
         _slider('Tags', p.tagScale, c.setTagScale),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
             onPressed: () {
-              c.setTitleScale(1.0);
+              c.setBrandScale(1.0);
+              c.setModelScale(1.0);
               c.setYearScale(1.0);
               c.setTagScale(1.0);
             },
