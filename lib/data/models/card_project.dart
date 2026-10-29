@@ -1,3 +1,4 @@
+import 'card_style.dart';
 import 'card_tag.dart';
 import 'photo_fill.dart';
 import 'photo_transform.dart';
@@ -12,13 +13,20 @@ class CardProject {
     this.photoId,
     this.photoTransform = PhotoTransform.identity,
     this.photoFill = PhotoFill.smart,
+    this.videoId,
+    this.videoStartMs = 0,
+    this.videoLengthMs = defaultVideoLengthMs,
+    this.videoDurationMs = 0,
+    this.videoPosterMs = 0,
     this.fillFileName,
     this.fillSignature,
     this.logoId,
     this.logoScale = 1.0,
     this.logoDx = 0.0,
     this.logoDy = 0.0,
-    this.titleScale = 1.0,
+    this.brandScale = 1.0,
+    this.modelScale = 1.0,
+    this.cardStyle = CardStyle.fan,
     this.yearScale = 1.0,
     this.tagScale = 1.0,
     this.brand = 'Brand',
@@ -39,6 +47,11 @@ class CardProject {
   })  : tags = tags ?? <CardTag>[],
         updatedAt = updatedAt ?? DateTime.now();
 
+  /// Longest clip of a video card and the one chosen for a new video.
+  static const maxVideoLengthMs = 10000;
+  static const defaultVideoLengthMs = 6000;
+  static const minVideoLengthMs = 1000;
+
   static const defaultPrizeText = 'This car is only available by winning certain events.';
 
   static String newId() => DateTime.now().microsecondsSinceEpoch.toString();
@@ -52,6 +65,22 @@ class CardProject {
   PhotoTransform photoTransform;
   PhotoFill photoFill;
 
+  /// A video card: the video takes the place of the photo ([photoId] is then
+  /// null) and is framed with the same [photoTransform]. [videoStartMs] and
+  /// [videoLengthMs] are the clip, [videoDurationMs] the whole video, and
+  /// [videoPosterMs] the time of the still frame that stands in for the photo
+  /// (previews, the home grid, exported pictures).
+  String? videoId;
+  int videoStartMs;
+  int videoLengthMs;
+  int videoDurationMs;
+  int videoPosterMs;
+
+  bool get hasVideo => videoId != null;
+
+  /// A photo or a video is chosen.
+  bool get hasMedia => photoId != null || videoId != null;
+
   /// The generated content-aware fill and the framing it was made for.
   String? fillFileName;
   String? fillSignature;
@@ -64,10 +93,16 @@ class CardProject {
   double logoDx;
   double logoDy;
 
-  /// Per-card size multipliers (1.0 = the template's size).
-  double titleScale;
+  /// Per-card size multipliers (1.0 = the template's size). [brandScale] is the
+  /// exact brand size; [modelScale] is the largest size the model may have, a long
+  /// model is shrunk (or wrapped, in the game style) to fit.
+  double brandScale;
+  double modelScale;
   double yearScale;
   double tagScale;
+
+  /// Fan-made or official (game) look of the title.
+  CardStyle cardStyle;
   String brand;
   String model;
   String year;
@@ -109,13 +144,20 @@ class CardProject {
         'photoId': photoId,
         'photoTransform': photoTransform.toJson(),
         'photoFill': photoFill.name,
+        'videoId': videoId,
+        'videoStartMs': videoStartMs,
+        'videoLengthMs': videoLengthMs,
+        'videoDurationMs': videoDurationMs,
+        'videoPosterMs': videoPosterMs,
         'fillFileName': fillFileName,
         'fillSignature': fillSignature,
         'logoId': logoId,
         'logoScale': logoScale,
         'logoDx': logoDx,
         'logoDy': logoDy,
-        'titleScale': titleScale,
+        'brandScale': brandScale,
+        'modelScale': modelScale,
+        'cardStyle': cardStyle.name,
         'yearScale': yearScale,
         'tagScale': tagScale,
         'brand': brand,
@@ -149,6 +191,7 @@ class CardProject {
     } else if (j['tagAsset'] is String) {
       tags.add(CardTag(asset: j['tagAsset'] as String));
     }
+    final legacyTitleScale = (j['titleScale'] as num?)?.toDouble() ?? 1.0;
     return CardProject(
       id: j['id'] as String,
       name: s('name', 'New card'),
@@ -156,13 +199,21 @@ class CardProject {
       photoId: j['photoId'] as String?,
       photoTransform: PhotoTransform.fromJson(j['photoTransform'] as Map<String, dynamic>?),
       photoFill: parsePhotoFill(j['photoFill'] as String?),
+      videoId: j['videoId'] as String?,
+      videoStartMs: (j['videoStartMs'] as num?)?.toInt() ?? 0,
+      videoLengthMs: (j['videoLengthMs'] as num?)?.toInt() ?? defaultVideoLengthMs,
+      videoDurationMs: (j['videoDurationMs'] as num?)?.toInt() ?? 0,
+      videoPosterMs: (j['videoPosterMs'] as num?)?.toInt() ?? 0,
       fillFileName: j['fillFileName'] as String?,
       fillSignature: j['fillSignature'] as String?,
       logoId: j['logoId'] as String?,
       logoScale: (j['logoScale'] as num?)?.toDouble() ?? 1.0,
       logoDx: (j['logoDx'] as num?)?.toDouble() ?? 0.0,
       logoDy: (j['logoDy'] as num?)?.toDouble() ?? 0.0,
-      titleScale: (j['titleScale'] as num?)?.toDouble() ?? 1.0,
+      // Cards saved before brand and model were split have one `titleScale`.
+      brandScale: (j['brandScale'] as num?)?.toDouble() ?? legacyTitleScale,
+      modelScale: (j['modelScale'] as num?)?.toDouble() ?? legacyTitleScale,
+      cardStyle: parseCardStyle(j['cardStyle'] as String?),
       yearScale: (j['yearScale'] as num?)?.toDouble() ?? 1.0,
       tagScale: (j['tagScale'] as num?)?.toDouble() ?? 1.0,
       brand: s('brand', ''),

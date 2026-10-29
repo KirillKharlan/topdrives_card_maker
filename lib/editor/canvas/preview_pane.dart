@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../editor_controller.dart';
 import 'card_composition.dart';
+import 'video_layer.dart';
 
 /// Live preview. Drag / pinch on it to move and zoom the photo.
 class PreviewPane extends StatelessWidget {
@@ -25,6 +26,16 @@ class PreviewPane extends StatelessWidget {
             photoFile: c.photoFile,
             logoFile: c.logoFile,
             fillFile: c.smartFillFile,
+            videoLayer: c.videoFile == null
+                ? null
+                : VideoLayer(
+                    file: c.videoFile!,
+                    transform: c.project.photoTransform,
+                    cardSize: Size(c.template.width, c.template.height),
+                    startMs: c.project.videoStartMs,
+                    lengthMs: c.project.videoLengthMs,
+                    hidden: c.videoHidden,
+                  ),
             cardKey: c.cardKey,
             fullKey: c.fullKey,
           ),

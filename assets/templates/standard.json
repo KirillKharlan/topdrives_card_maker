@@ -42,15 +42,47 @@
     "prizePaddingBottom": 2,
     "prizeIconCrop": 0.82
   },
-  "fields": {
-    "title": {
+  "titleStyles": {
+    "fan": {
       "x": 158,
-      "y": 1,
       "w": 890,
-      "h": 90,
-      "size": 72.5,
-      "align": "left"
+      "brandSize": 71.8,
+      "modelSize": 71.8,
+      "baseline": 68,
+      "gapEm": 0.35,
+      "wrap": true,
+      "twoLineScale": 0.7,
+      "lineHeight": 0.93
     },
+    "game": {
+      "x": 154,
+      "w": 894,
+      "brandSize": 48.9,
+      "modelSize": 51.1,
+      "baseline": 62,
+      "gapEm": 0.35,
+      "wrap": true,
+      "twoLineScale": 0.99,
+      "lineHeight": 0.93
+    }
+  },
+  "prizeStyles": {
+    "game": {
+      "paddingLeft": 62.7,
+      "paddingTop": 21.1,
+      "paddingBottom": 2,
+      "iconHeight": 119.3,
+      "iconCrop": 0.82,
+      "iconDy": 8,
+      "gap": 20,
+      "textSize": 41,
+      "textWidth": 560,
+      "letterSpacing": 2.9,
+      "textStroke": 1.8,
+      "lineHeight": 1.15
+    }
+  },
+  "fields": {
     "year": {
       "x": 1061,
       "y": 13,

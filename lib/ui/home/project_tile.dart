@@ -72,7 +72,7 @@ class ProjectTile extends StatelessWidget {
                     child: CardView(
                       project: project,
                       template: template,
-                      photoFile: store.photos.fileOf(project.photoId),
+                      photoFile: store.photoFileFor(project),
                       logoFile: store.logos.fileOf(project.logoId),
                       photoMaxWidth: 700,
                       fillFile: store.smartFillFor(project),

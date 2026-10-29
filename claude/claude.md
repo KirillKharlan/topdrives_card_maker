@@ -51,6 +51,15 @@ claude/claude.md                 this file
   Tag strip is above the card, prize marker below it, both on a black backdrop (`CardComposition`).
 - All card text ignores the phone's font scale (`TextScaler.noScaling`) and is multiplied by the template's
   `textScale` (0.9, an empirical calibration). Per-card multipliers: `titleScale`, `yearScale`, `tagScale`.
+- Title (brand + model) is NOT a `FieldRect`: `TitleText` (title_text.dart) draws brand (bold, fixed size) and model
+  (regular, fits the rest of the line) on one baseline with `TextPainter`. Two looks per card (`CardProject.cardStyle`):
+  `fan` and `game`. A look changes ONLY text sizes and the prize-marker position (user's explicit definition); wrapping of a
+  long model is the same in both: shrink on one line down to `twoLineScale`, then wrap to 2 lines (brand centred between).
+  Brand and model are centred by cap height on one line (not baseline-aligned), also when the brand is scaled.
+  Numbers in `standard.json` `titleStyles` / `prizeStyles.game`, measured from screenshots (fan 64.5, game brand 44 / model 46
+  card units, baselines 68 / 62; game prize: trophy circle left 70, diameter 74, text left 173, two lines pitch 42.4).
+  Fan two-line size (`twoLineScale` 0.7) is an estimate, there is no fan reference with two lines. Fan prize = `extras.prize*`.
+  Per-card `brandScale` / `modelScale` (modelScale = maximum size). Old `titleScale` is read as both on load.
 - Text fields: `FieldRect` (x, y, w, h, size, align). Text is vertically centred and shrinks to fit
   (`FittedBox.scaleDown`). Optional `baseline` anchors text on an exact baseline (used for the tyre name).
 - Font: Roboto Condensed Regular/Bold only. "Medium" looks are faked by drawing text twice (fill +
@@ -103,4 +112,15 @@ claude/claude.md                 this file
 - Content-aware fill takes a few seconds and can look streaky on asphalt.
 - Logos from the internet often have margins or backgrounds: "Trim margins" and "Remove background" help;
   background removal works on plain backgrounds only (flood fill, no ML).
+- Game and fan looks differ only in the title (right-hand stat numbers, year, country measured equal; tyre row not compared).
 - Ideas not done: ONNX inpainting, real "medium" font weight, thumbnails cache for the home grid.
+
+## Video cards (stage 1 done, export not yet)
+- `CardProject.videoId/videoStartMs/videoLengthMs/videoDurationMs/videoPosterMs`; a video card has `photoId == null`.
+  `store.photoFileFor(project)` returns the photo or the poster frame (`<video>.poster-<ms>.jpg`), so everything that
+  needs a still (grid, PNG export, fills' background) works unchanged. `hasMedia` = photo or video.
+- Live video: `VideoLayer` (video_player) drawn over `PhotoLayer` in the preview only, same cover/scale/rotate/shift
+  math as `paintPhoto`. `EditorController.withoutVideo` hides it while the card is captured (textures are not
+  reliably captured by `toImage`).
+- Frames: Kotlin channel `card_maker/video` ("frame": path, timeMs, out) written by tool/patch_android.py.
+- Planned: stage 2 MP4 export (MediaCodec/MediaMuxer, same channel), stage 3 GIF (shared palette, dither, fps 10/20/25).

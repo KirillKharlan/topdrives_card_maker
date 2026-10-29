@@ -17,6 +17,7 @@ class AppStore {
 
   final photos = MediaLibrary('photos');
   final logos = MediaLibrary('logos');
+  final videos = MediaLibrary('videos');
   final fills = FillStore();
   final projects = ProjectRepository();
   final settings = SettingsRepository();
@@ -35,6 +36,8 @@ class AppStore {
     await store.photos.init(root);
     step('Loading logos…');
     await store.logos.init(root);
+    step('Loading videos…');
+    await store.videos.init(root);
     await store.fills.init(root);
     step('Loading cards…');
     await store.projects.init(root);
@@ -58,9 +61,26 @@ class AppStore {
     return file.existsSync() ? file : null;
   }
 
+  /// The picture that stands in for the car photo: the photo itself, or for a
+  /// video card the still frame of the video.
+  File? photoFileFor(CardProject project) {
+    if (project.photoId != null) return photos.fileOf(project.photoId);
+    final id = project.videoId;
+    if (id == null) return null;
+    final poster = videos.sideFile(id, '.poster-${project.videoPosterMs}.jpg');
+    return (poster != null && poster.existsSync()) ? poster : null;
+  }
+
+  /// Deletes a video from the library once no card uses it any more.
+  Future<void> releaseVideo(String? id) async {
+    if (id == null || projects.countUsingVideo(id) > 0) return;
+    await videos.delete(id);
+  }
+
   Future<void> deleteProject(CardProject project) async {
     await fills.delete(project.fillFileName);
     await projects.delete(project.id);
+    await releaseVideo(project.videoId);
   }
 
   Future<void> deletePhoto(String id) async {

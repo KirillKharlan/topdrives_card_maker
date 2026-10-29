@@ -38,8 +38,9 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
           }
         }
 
-        Future<Uint8List> cardPng() =>
-            CardExporter.capture((hasExtras && includeExtras) ? c.fullKey : c.cardKey);
+        Future<Uint8List> cardPng() => c.withoutVideo(
+              () => CardExporter.capture((hasExtras && includeExtras) ? c.fullKey : c.cardKey),
+            );
 
         Future<Uint8List> photoPng() => CardExporter.croppedPhoto(
               file: c.photoFile!,

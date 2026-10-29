@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 
 import '../../core/layout_tweaks.dart';
 import '../../data/models/card_project.dart';
+import '../../data/models/photo_fill.dart';
 import '../../templates/template_spec.dart';
 import 'field_text.dart';
 import 'logo_tile.dart';
 import 'photo_layer.dart';
+import 'title_text.dart';
 
 /// The card itself, drawn at the template's native size (e.g. 1338x828).
 /// Layers, bottom to top: background, photo, class frame, logo, texts.
@@ -21,6 +23,7 @@ class CardView extends StatelessWidget {
     this.logoFile,
     this.photoMaxWidth = 2600,
     this.fillFile,
+    this.videoLayer,
   });
 
   final CardProject project;
@@ -33,6 +36,9 @@ class CardView extends StatelessWidget {
 
   /// The current content-aware fill picture, if any.
   final File? fillFile;
+
+  /// The live video of a video card (preview only), drawn over the still frame.
+  final Widget? videoLayer;
 
   @override
   Widget build(BuildContext context) {
@@ -56,12 +62,17 @@ class CardView extends StatelessWidget {
                 child: PhotoLayer(
                   file: photoFile!,
                   transform: project.photoTransform,
-                  fill: project.photoFill,
+                  // A moving picture has no generated fill, mirror stands in.
+                  fill: project.hasVideo && project.photoFill == PhotoFill.smart
+                      ? PhotoFill.mirror
+                      : project.photoFill,
                   background: t.photoBackground,
                   maxWidth: photoMaxWidth,
                   smartFill: fillFile,
                 ),
               ),
+            if (photoFile != null && videoLayer != null)
+              Positioned.fill(key: const ValueKey('video-layer'), child: videoLayer!),
             // Frosted glass: blur the photo behind the semi-transparent parts of the frame.
             if (photoFile != null && t.blurSigma > 0)
               for (final r in t.blurRegions)
@@ -90,10 +101,14 @@ class CardView extends StatelessWidget {
               ),
             ),
             if (logoFile != null) _logo(),
-            FieldText(
-              scale: t.textScale * project.titleScale,
-              rect: t.field('title'),
-              parts: [('${project.brand} ', true), (project.model, false)],
+            // Brand keeps its size; the model fits itself into the rest of the line.
+            TitleText(
+              brand: project.brand,
+              model: project.model,
+              style: t.titleStyle(project.cardStyle),
+              textScale: t.textScale,
+              brandScale: project.brandScale,
+              modelScale: project.modelScale,
             ),
             FieldText(
               scale: t.textScale * project.yearScale,

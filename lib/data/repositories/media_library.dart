@@ -41,12 +41,19 @@ class MediaLibrary extends ChangeNotifier {
     return null;
   }
 
-  Future<MediaItem> addFromPath(String sourcePath) async {
+  /// A file that belongs to the item (e.g. the poster frame of a video), next to
+  /// it and named after it. It is removed together with the item.
+  File? sideFile(String? id, String suffix) {
+    final file = fileOf(id);
+    return file == null ? null : File('${file.path}$suffix');
+  }
+
+  Future<MediaItem> addFromPath(String sourcePath, {String defaultExt = '.jpg'}) async {
     final id = DateTime.now().microsecondsSinceEpoch.toString();
     final dot = sourcePath.lastIndexOf('.');
     final ext = (dot >= 0 && sourcePath.length - dot <= 5)
         ? sourcePath.substring(dot).toLowerCase()
-        : '.jpg';
+        : defaultExt;
     final fileName = '$id$ext';
     await File(sourcePath).copy('${_dir.path}/$fileName');
     final item = MediaItem(id: id, fileName: fileName, addedAt: DateTime.now());
@@ -71,7 +78,15 @@ class MediaLibrary extends ChangeNotifier {
   Future<void> delete(String id) async {
     final file = fileOf(id);
     _items.removeWhere((i) => i.id == id);
-    if (file != null && await file.exists()) await file.delete();
+    if (file != null) {
+      if (await file.exists()) await file.delete();
+      final name = file.uri.pathSegments.last;
+      for (final entry in _dir.listSync()) {
+        if (entry is File && entry.uri.pathSegments.last.startsWith('$name.')) {
+          await entry.delete();
+        }
+      }
+    }
     await _save();
     notifyListeners();
   }

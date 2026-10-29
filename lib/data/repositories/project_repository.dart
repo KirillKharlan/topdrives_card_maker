@@ -57,6 +57,8 @@ class ProjectRepository extends ChangeNotifier {
 
   int countUsingPhoto(String photoId) => _items.where((p) => p.photoId == photoId).length;
 
+  int countUsingVideo(String videoId) => _items.where((p) => p.videoId == videoId).length;
+
   int countUsingLogo(String logoId) => _items.where((p) => p.logoId == logoId).length;
 
   /// Called before a photo is deleted from the library: the cards stay, the
