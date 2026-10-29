@@ -31,11 +31,19 @@ class EditorController extends ChangeNotifier {
   double _gestureStartRotation = 0;
 
   /// The photo, or for a video card the still frame of the video.
-  File? get photoFile => store.photoFileFor(project);
+  File? get photoFile => exportFrame ?? store.photoFileFor(project);
   File? get videoFile => store.videos.fileOf(project.videoId);
 
   /// True while the card is captured as a picture: the live video is left out.
   bool videoHidden = false;
+
+  /// While a video is exported: the frame of the video shown in place of the photo.
+  File? exportFrame;
+
+  void setExportFrame(File? frame) {
+    exportFrame = frame;
+    notifyListeners();
+  }
   File? get logoFile => store.logos.fileOf(project.logoId);
 
   /// The content-aware fill picture, if it exists and matches the framing.

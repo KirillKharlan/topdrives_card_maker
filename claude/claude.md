@@ -123,4 +123,7 @@ claude/claude.md                 this file
   math as `paintPhoto`. `EditorController.withoutVideo` hides it while the card is captured (textures are not
   reliably captured by `toImage`).
 - Frames: Kotlin channel `card_maker/video` ("frame": path, timeMs, out) written by tool/patch_android.py.
-- Planned: stage 2 MP4 export (MediaCodec/MediaMuxer, same channel), stage 3 GIF (shared palette, dither, fps 10/20/25).
+- Stage 2 done: MP4 export. `VideoExporter.exportMp4` puts each video frame (JPEG from the channel) into the live card
+  via `EditorController.exportFrame`, captures `cardKey/fullKey` as RGBA (`CardExporter.captureRgba`) and streams it to
+  `Mp4Encoder.kt` (MediaCodec YUV420 flexible + MediaMuxer, BT.709 limited). Channel calls: encoderStart/Add/Finish/Cancel.
+- Planned: stage 3 GIF on the same frame pipeline (shared palette, dither, fps 10/20/25; frames go to temp files).
