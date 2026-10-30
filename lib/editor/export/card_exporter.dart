@@ -26,9 +26,12 @@ class CardExporter {
   }
 
   /// The card as raw pixels (RGBA), for the video encoder.
-  static Future<({Uint8List rgba, int width, int height})> captureRgba(GlobalKey key) async {
+  static Future<({Uint8List rgba, int width, int height})> captureRgba(
+    GlobalKey key, {
+    double pixelRatio = 1.0,
+  }) async {
     final boundary = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
-    final image = await boundary.toImage(pixelRatio: 1.0);
+    final image = await boundary.toImage(pixelRatio: pixelRatio);
     try {
       final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
       return (
@@ -124,6 +127,12 @@ class CardExporter {
   static Future<void> saveVideoToGallery(File video) async {
     if (!await Gal.hasAccess()) await Gal.requestAccess();
     await Gal.putVideo(video.path);
+  }
+
+  /// A picture file that is not a PNG capture (a GIF).
+  static Future<void> saveImageFileToGallery(File file) async {
+    if (!await Gal.hasAccess()) await Gal.requestAccess();
+    await Gal.putImage(file.path);
   }
 
   static Future<void> shareFile(File file, String fileName) async {

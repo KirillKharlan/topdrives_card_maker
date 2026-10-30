@@ -126,4 +126,8 @@ claude/claude.md                 this file
 - Stage 2 done: MP4 export. `VideoExporter.exportMp4` puts each video frame (JPEG from the channel) into the live card
   via `EditorController.exportFrame`, captures `cardKey/fullKey` as RGBA (`CardExporter.captureRgba`) and streams it to
   `Mp4Encoder.kt` (MediaCodec YUV420 flexible + MediaMuxer, BT.709 limited). Channel calls: encoderStart/Add/Finish/Cancel.
-- Planned: stage 3 GIF on the same frame pipeline (shared palette, dither, fps 10/20/25; frames go to temp files).
+- Stage 3 done: GIF export. `VideoExporter.exportGif`: frames -> zlib temp files (compute) -> `gifWorker` isolate
+  (gif_encoder.dart): one global palette (median cut on 15-bit histogram of ~10 sampled frames), Floyd-Steinberg dither,
+  GIF LZW, written per frame; progress 0.7 render + 0.3 encode. fps 10/20/25 (centisecond delays), scale 1/.75/.5 via
+  toImage pixelRatio. LZW/container verified in Python against Pillow; ~0.7 MB per full-size frame.
+- Possible later: frame differencing with transparency to shrink GIFs, MP4 fallback if an encoder rejects the size.

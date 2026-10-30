@@ -15,6 +15,8 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
   final hasPhoto = c.photoFile != null;
   var includeExtras = true;
   var videoFps = 30;
+  var gifFps = 20;
+  var gifScale = 1.0;
 
   return showModalBottomSheet<void>(
     context: context,
@@ -41,8 +43,8 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
           }
         }
 
-        // MP4 of the video card: every frame is rendered through the live card.
-        Future<void> deliverVideo({required bool share}) async {
+        // MP4 or GIF of the video card: every frame is rendered through the live card.
+        Future<void> deliverVideo({required bool gif, required bool share}) async {
           Navigator.pop(sheetContext);
           final messenger = ScaffoldMessenger.of(context);
           final progress = ValueNotifier<double>(0);
@@ -51,7 +53,7 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
             context: context,
             barrierDismissible: false,
             builder: (_) => AlertDialog(
-              title: const Text('Rendering video'),
+              title: Text(gif ? 'Rendering GIF' : 'Rendering video'),
               content: ValueListenableBuilder<double>(
                 valueListenable: progress,
                 builder: (_, value, __) => Column(
@@ -72,14 +74,25 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
           File? file;
           Object? failure;
           try {
-            file = await VideoExporter.exportMp4(
-              context: context,
-              controller: c,
-              key: (hasExtras && includeExtras) ? c.fullKey : c.cardKey,
-              fps: videoFps,
-              progress: progress,
-              cancel: cancel,
-            );
+            final key = (hasExtras && includeExtras) ? c.fullKey : c.cardKey;
+            file = gif
+                ? await VideoExporter.exportGif(
+                    context: context,
+                    controller: c,
+                    key: key,
+                    fps: gifFps,
+                    scale: gifScale,
+                    progress: progress,
+                    cancel: cancel,
+                  )
+                : await VideoExporter.exportMp4(
+                    context: context,
+                    controller: c,
+                    key: key,
+                    fps: videoFps,
+                    progress: progress,
+                    cancel: cancel,
+                  );
           } on VideoExportCancelled {
             failure = null;
           } catch (e) {
@@ -96,8 +109,14 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
               final safe = c.project.name.replaceAll(RegExp(r'[^\w\-]+'), '_');
               await CardExporter.shareFile(file, safe.isEmpty ? 'card' : safe);
             } else {
-              await CardExporter.saveVideoToGallery(file);
-              messenger.showSnackBar(const SnackBar(content: Text('Video saved to gallery')));
+              if (gif) {
+                await CardExporter.saveImageFileToGallery(file);
+              } else {
+                await CardExporter.saveVideoToGallery(file);
+              }
+              messenger.showSnackBar(
+                SnackBar(content: Text(gif ? 'GIF saved to gallery' : 'Video saved to gallery')),
+              );
             }
           } catch (e) {
             messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
@@ -131,12 +150,12 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
                       '${(c.project.videoLengthMs / 1000).toStringAsFixed(1)} s, '
                       '${VideoExporter.frameCount(c, videoFps)} frames, full card size',
                     ),
-                    onTap: () => deliverVideo(share: false),
+                    onTap: () => deliverVideo(gif: false, share: false),
                   ),
                   ListTile(
                     leading: const Icon(Icons.ios_share),
                     title: const Text('Share video (MP4)'),
-                    onTap: () => deliverVideo(share: true),
+                    onTap: () => deliverVideo(gif: false, share: true),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -152,6 +171,53 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
                               selected: videoFps == fps,
                               onSelected: (_) => setSheetState(() => videoFps = fps),
                             ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.gif_box_outlined),
+                    title: const Text('Save GIF to gallery'),
+                    subtitle: Text(
+                      '${VideoExporter.frameCount(c, gifFps)} frames, '
+                      'about ${VideoExporter.gifMegabytes(c, gifFps, gifScale).round()} MB',
+                    ),
+                    onTap: () => deliverVideo(gif: true, share: false),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.ios_share),
+                    title: const Text('Share GIF'),
+                    onTap: () => deliverVideo(gif: true, share: true),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      children: [
+                        const Text('GIF frames per second'),
+                        for (final fps in const [10, 20, 25])
+                          ChoiceChip(
+                            label: Text('$fps'),
+                            selected: gifFps == fps,
+                            onSelected: (_) => setSheetState(() => gifFps = fps),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      children: [
+                        const Text('GIF size'),
+                        for (final entry in const {'Full': 1.0, '75%': 0.75, '50%': 0.5}.entries)
+                          ChoiceChip(
+                            label: Text(entry.key),
+                            selected: gifScale == entry.value,
+                            onSelected: (_) => setSheetState(() => gifScale = entry.value),
                           ),
                       ],
                     ),
