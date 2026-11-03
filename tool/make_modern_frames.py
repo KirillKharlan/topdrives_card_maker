@@ -4,8 +4,9 @@ Run from the project root:  python3 tool/make_modern_frames.py
 
 The modern look (seen on newer cards of the game): no stars, the tuning wrench
 sits lower and is bigger, the bottom shading strip is gone (more room for the
-photo), the stat panels fade in from the left, and the class block is a plain
-colour block with a pixelated fade above it and no class letter.
+photo), the stat panels fade in from fully transparent on the left, and the
+class block is a plain colour block with a see-through chequered flag above it
+(squares in the class colour, fading upwards) and no class letter.
 Everything that is not listed here (title bar, logo block, country block, the
 words under the numbers) is taken from the standard frame unchanged.
 """
@@ -19,6 +20,11 @@ SRC = {'S': 'legendary', 'A': 'epic', 'B': 'ultra_rare', 'C': 'super_rare',
        'D': 'rare', 'E': 'uncommon', 'F': 'common'}
 OUT = 'assets/frames/modern'
 PANEL_RGB = np.array([38.0, 36.0, 35.0])
+PANEL_MAX = 0.72      # how dark the stat panels get on the right
+RAMP_END = 1260       # x (card units) where they are darkest; the template's blur fades over the same width
+CHECK_TOP = 690       # the solid colour block starts here, the chequered flag sits above it
+CHECK_CELL = 35       # size of a square of the chequered flag
+CHECK_ALPHA = [1.0, 0.60, 0.38, 0.20, 0.10]   # row by row, upwards
 
 
 def px(x, y):
@@ -93,8 +99,8 @@ def build(letter, name):
     spans.append((start, prev + 1))
     x0p, x1p = px(1060, 0)[0], px(1338, 0)[0]
     xs = np.arange(x0p, x1p)
-    t = np.clip((xs - px(1066, 0)[0]) / (px(1240, 0)[0] - px(1066, 0)[0]), 0, 1)
-    panel_alpha = 0.12 + 0.60 * t                      # 12% at the left edge, 72% from x=1240
+    t = np.clip((xs - px(1066, 0)[0]) / (px(RAMP_END, 0)[0] - px(1066, 0)[0]), 0, 1)
+    panel_alpha = PANEL_MAX * t                        # fully clear at the left edge, PANEL_MAX from RAMP_END on
     for ya, yb in spans:
         block = a[ya:yb, x0p:x1p]
         inside = block[..., 3] > 0
@@ -106,7 +112,7 @@ def build(letter, name):
         out[ya:yb, x0p:x1p, :3] = np.where(inside[..., None], rgb, 0)
         out[ya:yb, x0p:x1p, 3] = oa * 255
 
-    # --- new class block: solid colour with a pixelated fade above it ---
+    # --- new class block: solid colour, and above it a see-through chequered flag ---
     def rect(x0, y0, x1, y1, alpha):
         ys, xs_ = region(x0, y0, x1, y1)
         blk = out[ys, xs_]
@@ -114,13 +120,13 @@ def build(letter, name):
         oa = alpha + da * (1 - alpha)
         blk[..., :3] = (cls * alpha + blk[..., :3] * da * (1 - alpha)) / np.maximum(oa, 1e-6)
         blk[..., 3:4] = oa * 255
-    cols = [(0, 47, 685, [(570, 605, .30), (627, 660, .55)]),
-            (47, 94, 665, [(545, 580, .15), (580, 620, .30), (622, 663, .55)]),
-            (94, 141, 695, [(560, 595, .20), (597, 630, .35), (648, 692, .55)])]
-    for x0, x1, solid_top, tiles in cols:
-        for ty0, ty1, al in tiles:
-            rect(x0, ty0, x1, ty1, al)
-        rect(x0, solid_top, x1, 828, 1.0)
+    width = 141 / 3                                   # three columns of squares
+    for row, alpha in enumerate(CHECK_ALPHA, start=1):
+        top = CHECK_TOP - CHECK_CELL * row
+        for col in range(3):
+            if (col + row) % 2 == 0:                  # every other square, like a chequered flag
+                rect(col * width, top, (col + 1) * width, top + CHECK_CELL, alpha)
+    rect(0, CHECK_TOP, 141, 828, 1.0)
 
     # --- sprites back: dark RQ logo on the block, words under the photo, wrench ---
     put(out, logo_cov_arr, logo_pos, (40, 38, 42), scale=0.78, anchor=px(36, 799))

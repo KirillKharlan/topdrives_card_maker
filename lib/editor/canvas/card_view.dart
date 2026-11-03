@@ -78,22 +78,23 @@ class CardView extends StatelessWidget {
             // Frosted glass: blur the photo behind the semi-transparent parts of the frame.
             if (photoFile != null && t.blurSigma > 0)
               for (final r in t.blurRegions)
-                Positioned(
-                  left: r.x,
-                  top: r.y,
-                  width: r.w,
-                  height: r.h,
-                  child: ClipRect(
-                    child: BackdropFilter(
-                      filter: ui.ImageFilter.blur(
-                        sigmaX: t.blurSigma,
-                        sigmaY: t.blurSigma,
-                        tileMode: TileMode.clamp,
+                for (final piece in r.blurPieces(t.blurSigma))
+                  Positioned(
+                    left: piece.rect.left,
+                    top: piece.rect.top,
+                    width: piece.rect.width,
+                    height: piece.rect.height,
+                    child: ClipRect(
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(
+                          sigmaX: piece.sigma,
+                          sigmaY: piece.sigma,
+                          tileMode: TileMode.clamp,
+                        ),
+                        child: const SizedBox.expand(),
                       ),
-                      child: const SizedBox.expand(),
                     ),
                   ),
-                ),
             Positioned.fill(
               child: Image.asset(
                 frame,

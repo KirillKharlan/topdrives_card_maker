@@ -136,7 +136,10 @@ claude/claude.md                 this file
 - Templates: `assets/templates/<id>.json` + frames; list in `TemplateRegistry._ids`; `EditorController.template` is a getter
   (follows `project.templateId`). New frame folders must be declared in pubspec (assets are not recursive).
 - `modern` frames are generated: `python3 tool/make_modern_frames.py` (from the standard frames, in 2400x1494 pixels).
-  Measured from a Porsche 911 GT2 card: no stars/bottom strip, wrench 1.5x at (185,750), gradient stat panels,
-  pixel-fade colour block (no class letter), dark RQ number (`fields.rq.color`, y 699). Only class A was seen.
+  Measured from a Porsche 911 GT2 card: no stars/bottom strip, wrench 1.5x at (185,750), stat panels fading in from fully clear
+  (alpha 0 -> 0.72 over x 1066..1260; the template's blur fades over the same width via `blurRegions[].fadeLeft`),
+  colour block topped by a see-through chequered flag (35-unit squares, 3 columns, alpha fading upwards; class colour),
+  dark RQ number (`fields.rq.color`, y 699). Only class A was seen. `drivePrefix` has an explicit baseline (742) so the
+  F/R/4 stands on the baseline of the baked "WD".
 - Flag: `CardProject.showFlag`, `CountryFlags` (painted, simplified), `FlagBadge` between frame and texts, polygon and
   opacity in template `flag`. Works in every template.

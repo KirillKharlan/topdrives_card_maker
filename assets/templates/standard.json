@@ -133,8 +133,9 @@
       "y": 656,
       "w": 134,
       "h": 110,
-      "size": 101,
-      "align": "right"
+      "size": 99,
+      "align": "right",
+      "baseline": 742
     },
     "tyre": {
       "x": 420,
