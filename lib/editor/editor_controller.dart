@@ -180,10 +180,7 @@ class EditorController extends ChangeNotifier {
   void setBrandScale(double v) => update((p) => p.brandScale = v);
   void setModelScale(double v) => update((p) => p.modelScale = v);
   void setCardStyle(CardStyle style) => update((p) => p.cardStyle = style);
-<<<<<<< HEAD
   void setTemplate(String id) => update((p) => p.templateId = id);
-=======
->>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
   void setYearScale(double v) => update((p) => p.yearScale = v);
   void setTagScale(double v) => update((p) => p.tagScale = v);
 

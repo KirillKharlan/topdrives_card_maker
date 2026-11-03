@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_constants.dart';
-<<<<<<< HEAD
 import '../../data/country_flags.dart';
-=======
->>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
 import '../../data/models/card_style.dart';
 import '../../ui/common/dialogs.dart';
 import '../editor_controller.dart';
@@ -78,7 +75,6 @@ class OptionsSection extends StatelessWidget {
         SectionCard(
           title: 'Style',
           children: [
-<<<<<<< HEAD
             if (c.store.templates.length > 1) ...[
               const Text('Template'),
               const SizedBox(height: 4),
@@ -98,8 +94,6 @@ class OptionsSection extends StatelessWidget {
               const Text('Text sizes'),
               const SizedBox(height: 4),
             ],
-=======
->>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
             Wrap(
               spacing: 8,
               runSpacing: 4,

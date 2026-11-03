@@ -27,10 +27,7 @@ class CardProject {
     this.brandScale = 1.0,
     this.modelScale = 1.0,
     this.cardStyle = CardStyle.fan,
-<<<<<<< HEAD
     this.showFlag = false,
-=======
->>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
     this.yearScale = 1.0,
     this.tagScale = 1.0,
     this.brand = 'Brand',
