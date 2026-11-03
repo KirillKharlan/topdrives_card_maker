@@ -1,19 +1,22 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../data/models/card_project.dart';
 import '../../data/models/media_item.dart';
 import '../../data/models/photo_fill.dart';
 import '../../data/models/photo_transform.dart';
 import '../../logo_editor/logo_editor_screen.dart';
 import '../../logo_editor/logo_trimmer.dart';
 import '../../ui/library/library_screen.dart';
+import '../../video/video_frames.dart';
 import '../canvas/logo_tile.dart';
 import '../editor_controller.dart';
 import 'section_card.dart';
 
-/// Car photo (library, replace, remove, zoom) and brand logo.
+/// Car photo or video (library, gallery, remove, zoom, clip) and brand logo.
 class MediaSection extends StatelessWidget {
   const MediaSection({super.key, required this.controller});
 
@@ -35,6 +38,34 @@ class MediaSection extends StatelessWidget {
     final item = await controller.store.photos.addFromPath(file.path);
     controller.setPhoto(item.id);
   }
+
+  /// Picks a video: it is copied into the app, a still frame (the first one) is
+  /// saved next to it and stands in for the photo everywhere except the live
+  /// preview.
+  Future<void> _videoFromGallery(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final picked = await ImagePicker().pickVideo(source: ImageSource.gallery);
+    if (picked == null) return;
+    final videos = controller.store.videos;
+    MediaItem? item;
+    try {
+      item = await videos.addFromPath(picked.path, defaultExt: '.mp4');
+      final file = videos.fileOf(item.id)!;
+      await VideoFrames.extract(
+        video: file,
+        timeMs: 0,
+        out: videos.sideFile(item.id, '.poster-0.jpg')!,
+      );
+      final durationMs = await VideoFrames.durationMs(file);
+      if (durationMs <= 0) throw StateError('the video has no length');
+      controller.setVideo(item.id, durationMs: durationMs);
+    } catch (e) {
+      if (item != null) await videos.delete(item.id);
+      messenger.showSnackBar(SnackBar(content: Text('Could not use this video: $e')));
+    }
+  }
+
+  static String _seconds(int ms) => (ms / 1000).toStringAsFixed(1);
 
   Future<void> _logoFromLibrary(BuildContext context) async {
     final item = await Navigator.push<MediaItem>(
@@ -87,7 +118,7 @@ class MediaSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = controller.project;
-    final hasPhoto = p.photoId != null;
+    final hasPhoto = p.hasMedia;
     final hasLogo = p.logoId != null;
     final logoFile = controller.logoFile;
     final logoSlot = controller.template.logo;
@@ -95,7 +126,7 @@ class MediaSection extends StatelessWidget {
     return Column(
       children: [
         SectionCard(
-          title: 'Car photo',
+          title: 'Car photo or video',
           children: [
             Wrap(
               spacing: 8,
@@ -110,6 +141,11 @@ class MediaSection extends StatelessWidget {
                   icon: const Icon(Icons.add_photo_alternate_outlined),
                   label: const Text('From gallery'),
                 ),
+                OutlinedButton.icon(
+                  onPressed: () => _videoFromGallery(context),
+                  icon: const Icon(Icons.video_library_outlined),
+                  label: Text(p.hasVideo ? 'Replace video' : 'Video'),
+                ),
                 if (hasPhoto)
                   OutlinedButton.icon(
                     onPressed: () => controller.setPhoto(null),
@@ -118,6 +154,48 @@ class MediaSection extends StatelessWidget {
                   ),
               ],
             ),
+            if (p.hasVideo) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Video clip: ${_seconds(p.videoStartMs)} to '
+                '${_seconds(p.videoStartMs + p.videoLengthMs)} s '
+                'of ${_seconds(p.videoDurationMs)} s. It plays in a loop in the preview.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              Row(
+                children: [
+                  const SizedBox(width: 64, child: Text('Start')),
+                  Expanded(
+                    child: Slider(
+                      value: p.videoStartMs.toDouble(),
+                      min: 0,
+                      max: (p.videoDurationMs - p.videoLengthMs).clamp(1, 1 << 30).toDouble(),
+                      onChanged: p.videoDurationMs - p.videoLengthMs <= 0
+                          ? null
+                          : (v) => controller.setVideoClip(startMs: v.round()),
+                      onChangeEnd: (_) => controller.refreshVideoPoster(),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  const SizedBox(width: 64, child: Text('Length')),
+                  Expanded(
+                    child: Slider(
+                      value: p.videoLengthMs.toDouble(),
+                      min: math.min(CardProject.minVideoLengthMs, p.videoDurationMs).toDouble(),
+                      max: math.min(CardProject.maxVideoLengthMs, p.videoDurationMs).toDouble(),
+                      onChanged: math.min(CardProject.maxVideoLengthMs, p.videoDurationMs) <=
+                              math.min(CardProject.minVideoLengthMs, p.videoDurationMs)
+                          ? null
+                          : (v) => controller.setVideoClip(lengthMs: v.round()),
+                      onChangeEnd: (_) => controller.refreshVideoPoster(),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (hasPhoto) ...[
               const SizedBox(height: 8),
               Row(
@@ -170,15 +248,17 @@ class MediaSection extends StatelessWidget {
               Wrap(
                 spacing: 8,
                 children: [
+                  // The generated fill cannot follow a moving picture.
                   for (final fill in PhotoFill.values)
-                    ChoiceChip(
+                    if (!(p.hasVideo && fill == PhotoFill.smart))
+                      ChoiceChip(
                       label: Text(fill.label),
                       selected: p.photoFill == fill,
                       onSelected: (_) => controller.setPhotoFill(fill),
                     ),
                 ],
               ),
-              if (p.photoFill == PhotoFill.smart) ...[
+              if (p.photoFill == PhotoFill.smart && !p.hasVideo) ...[
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -217,7 +297,7 @@ class MediaSection extends StatelessWidget {
               ],
               const SizedBox(height: 4),
               Text(
-                'Drag, pinch and twist (two fingers) on the card to frame the photo. '
+                'Drag, pinch and twist (two fingers) on the card to frame the photo or video. '
                 'Where the photo ends before the card edge, the gap is filled automatically.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),

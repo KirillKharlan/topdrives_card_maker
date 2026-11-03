@@ -9,7 +9,7 @@ import 'template_spec.dart';
 class TemplateRegistry {
   TemplateRegistry._();
 
-  static const _ids = ['standard'];
+  static const _ids = ['standard', 'modern'];
 
   static Future<Map<String, TemplateSpec>> loadAll() async {
     final result = <String, TemplateSpec>{};

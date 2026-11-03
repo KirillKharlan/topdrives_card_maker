@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_constants.dart';
+import '../../data/country_flags.dart';
+import '../../data/models/card_style.dart';
 import '../../ui/common/dialogs.dart';
 import '../editor_controller.dart';
 import 'section_card.dart';
 
-/// Pick-one options: class, drive, tyres, country.
+/// Pick-one options: style, class, drive, tyres, country.
 class OptionsSection extends StatelessWidget {
   const OptionsSection({super.key, required this.controller});
 
@@ -71,6 +73,46 @@ class OptionsSection extends StatelessWidget {
     return Column(
       children: [
         SectionCard(
+          title: 'Style',
+          children: [
+            if (c.store.templates.length > 1) ...[
+              const Text('Template'),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final t in c.store.templates.values)
+                    ChoiceChip(
+                      label: Text(t.name),
+                      selected: t.id == c.template.id,
+                      onSelected: (_) => c.setTemplate(t.id),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Text('Text sizes'),
+              const SizedBox(height: 4),
+            ],
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final style in CardStyle.values)
+                  ChoiceChip(
+                    label: Text(style.label),
+                    selected: style == p.cardStyle,
+                    onSelected: (_) => c.setCardStyle(style),
+                  ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(p.cardStyle.hint, style: Theme.of(context).textTheme.bodySmall),
+            ),
+          ],
+        ),
+        SectionCard(
           title: 'Class',
           children: [_chips(AppConstants.carClasses, p.carClass, (v) => c.update((x) => x.carClass = v))],
         ),
@@ -116,6 +158,17 @@ class OptionsSection extends StatelessWidget {
                   ],
                 );
               },
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Flag behind the code'),
+              subtitle: Text(
+                CountryFlags.has(p.country)
+                    ? 'Shows the flag of ${p.country} in the country block.'
+                    : 'No flag for ${p.country}.',
+              ),
+              value: p.showFlag,
+              onChanged: (v) => c.update((x) => x.showFlag = v),
             ),
             if (c.store.settings.customCountries.isNotEmpty)
               Padding(

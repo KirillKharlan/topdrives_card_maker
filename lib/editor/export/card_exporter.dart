@@ -25,6 +25,25 @@ class CardExporter {
     return data!.buffer.asUint8List();
   }
 
+  /// The card as raw pixels (RGBA), for the video encoder.
+  static Future<({Uint8List rgba, int width, int height})> captureRgba(
+    GlobalKey key, {
+    double pixelRatio = 1.0,
+  }) async {
+    final boundary = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    final image = await boundary.toImage(pixelRatio: pixelRatio);
+    try {
+      final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      return (
+        rgba: data!.buffer.asUint8List(),
+        width: image.width,
+        height: image.height,
+      );
+    } finally {
+      image.dispose();
+    }
+  }
+
   /// The framed car photo on its own: exactly what the photo layer shows on the
   /// card (zoom, shift, turn and the fill of empty areas), without frame, texts
   /// or tags. It is drawn from the original at its own resolution (at least the
@@ -103,6 +122,24 @@ class CardExporter {
   static Future<void> saveToGallery(Uint8List png) async {
     if (!await Gal.hasAccess()) await Gal.requestAccess();
     await Gal.putImageBytes(png);
+  }
+
+  static Future<void> saveVideoToGallery(File video) async {
+    if (!await Gal.hasAccess()) await Gal.requestAccess();
+    await Gal.putVideo(video.path);
+  }
+
+  /// A picture file that is not a PNG capture (a GIF).
+  static Future<void> saveImageFileToGallery(File file) async {
+    if (!await Gal.hasAccess()) await Gal.requestAccess();
+    await Gal.putImage(file.path);
+  }
+
+  static Future<void> shareFile(File file, String fileName) async {
+    final dir = await getTemporaryDirectory();
+    final ext = file.path.substring(file.path.lastIndexOf('.'));
+    final copy = await file.copy('${dir.path}/$fileName$ext');
+    await Share.shareXFiles([XFile(copy.path)]);
   }
 
   static Future<void> share(Uint8List png, String fileName) async {

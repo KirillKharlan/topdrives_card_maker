@@ -1,5 +1,7 @@
 import 'package:flutter/painting.dart';
 
+import '../data/models/card_style.dart';
+
 Color _hexColor(String hex) =>
     Color(int.parse(hex.replaceFirst('#', ''), radix: 16) | 0xFF000000);
 
@@ -16,10 +18,14 @@ class FieldRect {
     required this.size,
     required this.align,
     this.baseline,
+    this.color,
   });
 
   final double x, y, w, h, size;
   final String align;
+
+  /// Text colour of this field (white when the template does not say).
+  final Color? color;
 
   /// If set, the text sits exactly on this baseline (card units) instead of being
   /// centred vertically in the rectangle. Used to line the tyre name up with the
@@ -41,6 +47,7 @@ class FieldRect {
         size: size,
         align: align,
         baseline: baseline == null ? null : baseline! + dy,
+        color: color,
       );
 
   Alignment get topAlignment => switch (align) {
@@ -57,6 +64,196 @@ class FieldRect {
         size: _d(j['size']),
         align: (j['align'] as String?) ?? 'left',
         baseline: (j['baseline'] as num?)?.toDouble(),
+        color: _color(j['color'] as String?),
+      );
+}
+
+/// '#RRGGBB' to a colour, null for no or a malformed value.
+Color? _color(String? hex) {
+  if (hex == null || !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(hex)) return null;
+  return Color(0xFF000000 | int.parse(hex.substring(1), radix: 16));
+}
+
+/// The country block of the frame, which the flag fills: a polygon in card
+/// units (slanted on the left) and how solid the flag is.
+class FlagSpec {
+  const FlagSpec({required this.points, required this.opacity});
+
+  final List<Offset> points;
+  final double opacity;
+
+  static const standard = FlagSpec(
+    points: [Offset(1209.5, 0), Offset(1338, 0), Offset(1338, 97.5), Offset(1189, 97.5)],
+    opacity: 0.78,
+  );
+
+  factory FlagSpec.fromJson(Map<String, dynamic> j) {
+    final raw = j['points'] as List<dynamic>?;
+    return FlagSpec(
+      points: (raw == null || raw.isEmpty)
+          ? standard.points
+          : [for (final p in raw) Offset(_d((p as List<dynamic>)[0]), _d(p[1]))],
+      opacity: _d(j['opacity'] ?? standard.opacity),
+    );
+  }
+}
+
+/// How the brand + model line is set in one look (fan-made or game). Sizes are
+/// before [TemplateSpec.textScale], like every other size in the template.
+class TitleStyleSpec {
+  const TitleStyleSpec({
+    required this.x,
+    required this.w,
+    required this.brandSize,
+    required this.modelSize,
+    required this.baseline,
+    required this.gapEm,
+    required this.wrap,
+    required this.twoLineScale,
+    required this.lineHeight,
+  });
+
+  /// Left edge of the brand and the width the whole line may use.
+  final double x, w;
+
+  /// Brand size (never changes with the text) and the largest model size.
+  final double brandSize, modelSize;
+
+  /// Baseline of the line (card units). With two model lines they sit half a
+  /// line step above and below it, the brand stays on it.
+  final double baseline;
+
+  /// Space between brand and model, in brand sizes.
+  final double gapEm;
+
+  /// A model that does not fit wraps to two lines (both looks do this).
+  final bool wrap;
+
+  /// The model shrinks on one line only down to this part of its size; beyond that
+  /// it wraps to two lines, and this is also its size on those two lines.
+  final double twoLineScale;
+
+  /// Distance between the two model baselines, in model sizes.
+  final double lineHeight;
+
+  /// Measured on the fan card (BMW M4 GTS): size, x and baseline.
+  static const fanDefault = TitleStyleSpec(
+    x: 158,
+    w: 890,
+    brandSize: 71.8,
+    modelSize: 71.8,
+    baseline: 68,
+    gapEm: 0.35,
+    wrap: true,
+    twoLineScale: 0.7,
+    lineHeight: 0.93,
+  );
+
+  /// Measured on the game cards (Nissan Primera, McMurtry Speirling).
+  static const gameDefault = TitleStyleSpec(
+    x: 154,
+    w: 894,
+    brandSize: 48.9,
+    modelSize: 51.1,
+    baseline: 62,
+    gapEm: 0.35,
+    wrap: true,
+    twoLineScale: 0.99,
+    lineHeight: 0.93,
+  );
+
+  /// Missing keys fall back to [fallback], so an older standard.json still works.
+  factory TitleStyleSpec.fromJson(Map<String, dynamic> j, TitleStyleSpec fallback) =>
+      TitleStyleSpec(
+        x: _d(j['x'] ?? fallback.x),
+        w: _d(j['w'] ?? fallback.w),
+        brandSize: _d(j['brandSize'] ?? fallback.brandSize),
+        modelSize: _d(j['modelSize'] ?? fallback.modelSize),
+        baseline: _d(j['baseline'] ?? fallback.baseline),
+        gapEm: _d(j['gapEm'] ?? fallback.gapEm),
+        wrap: (j['wrap'] as bool?) ?? fallback.wrap,
+        twoLineScale: _d(j['twoLineScale'] ?? fallback.twoLineScale),
+        lineHeight: _d(j['lineHeight'] ?? fallback.lineHeight),
+      );
+}
+
+/// Prize-car marker under the card in one look. The fan-made look is the
+/// `extras.prize*` values of the template; the game look sets the trophy further
+/// in and bigger, and the text wraps to two lines (measured on game cards).
+class PrizeStyleSpec {
+  const PrizeStyleSpec({
+    required this.paddingLeft,
+    required this.paddingTop,
+    required this.paddingBottom,
+    required this.iconHeight,
+    required this.iconCrop,
+    required this.iconDy,
+    required this.gap,
+    required this.textSize,
+    required this.textWidth,
+    required this.letterSpacing,
+    required this.textStroke,
+    required this.lineHeight,
+  });
+
+  final double paddingLeft, paddingTop, paddingBottom;
+
+  /// Trophy picture height, the part of it that is kept, and how far it is
+  /// moved down (card units) to line it up with the text.
+  final double iconHeight, iconCrop, iconDy;
+
+  /// Space between the trophy and the text, and the width at which the text wraps.
+  final double gap, textWidth;
+
+  /// Text size (before textScale), extra letter spacing, outline width and line
+  /// height (in text sizes).
+  final double textSize, letterSpacing, textStroke, lineHeight;
+
+  factory PrizeStyleSpec.fromExtras(ExtrasSpec e) => PrizeStyleSpec(
+        paddingLeft: e.prizePaddingLeft,
+        paddingTop: e.prizePaddingTop,
+        paddingBottom: e.prizePaddingBottom,
+        iconHeight: e.prizeIconHeight,
+        iconCrop: e.prizeIconCrop,
+        iconDy: 0,
+        gap: e.prizeGap,
+        textSize: e.prizeTextSize,
+        textWidth: e.prizeTextWidth,
+        letterSpacing: e.prizeLetterSpacing,
+        textStroke: e.prizeTextStroke,
+        lineHeight: 1.1,
+      );
+
+  static const gameDefault = PrizeStyleSpec(
+    paddingLeft: 62.7,
+    paddingTop: 21.1,
+    paddingBottom: 2,
+    iconHeight: 119.3,
+    iconCrop: 0.82,
+    iconDy: 8,
+    gap: 20,
+    textSize: 41,
+    textWidth: 560,
+    letterSpacing: 2.9,
+    textStroke: 1.8,
+    lineHeight: 1.15,
+  );
+
+  /// Missing keys fall back to [fallback], so an older standard.json still works.
+  factory PrizeStyleSpec.fromJson(Map<String, dynamic> j, PrizeStyleSpec fallback) =>
+      PrizeStyleSpec(
+        paddingLeft: _d(j['paddingLeft'] ?? fallback.paddingLeft),
+        paddingTop: _d(j['paddingTop'] ?? fallback.paddingTop),
+        paddingBottom: _d(j['paddingBottom'] ?? fallback.paddingBottom),
+        iconHeight: _d(j['iconHeight'] ?? fallback.iconHeight),
+        iconCrop: _d(j['iconCrop'] ?? fallback.iconCrop),
+        iconDy: _d(j['iconDy'] ?? fallback.iconDy),
+        gap: _d(j['gap'] ?? fallback.gap),
+        textSize: _d(j['textSize'] ?? fallback.textSize),
+        textWidth: _d(j['textWidth'] ?? fallback.textWidth),
+        letterSpacing: _d(j['letterSpacing'] ?? fallback.letterSpacing),
+        textStroke: _d(j['textStroke'] ?? fallback.textStroke),
+        lineHeight: _d(j['lineHeight'] ?? fallback.lineHeight),
       );
 }
 
@@ -164,6 +361,9 @@ class TemplateSpec {
     required this.logo,
     required this.extras,
     required this.fields,
+    required this.titleStyles,
+    required this.prizeStyles,
+    required this.flag,
   });
 
   final String id, name;
@@ -183,10 +383,21 @@ class TemplateSpec {
   final LogoSpec logo;
   final ExtrasSpec extras;
   final Map<String, FieldRect> fields;
+  final Map<CardStyle, TitleStyleSpec> titleStyles;
+  final Map<CardStyle, PrizeStyleSpec> prizeStyles;
+  final FlagSpec flag;
 
   FieldRect field(String key) => fields[key]!;
 
+  TitleStyleSpec titleStyle(CardStyle style) => titleStyles[style] ?? TitleStyleSpec.fanDefault;
+
+  PrizeStyleSpec prizeStyle(CardStyle style) =>
+      prizeStyles[style] ?? PrizeStyleSpec.fromExtras(extras);
+
   factory TemplateSpec.fromJson(Map<String, dynamic> j) {
+    final rawStyles = (j['titleStyles'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+    final rawPrize = (j['prizeStyles'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+    final extras = ExtrasSpec.fromJson(j['extras'] as Map<String, dynamic>);
     return TemplateSpec(
       id: j['id'] as String,
       name: j['name'] as String,
@@ -204,9 +415,26 @@ class TemplateSpec {
       prizeBanner: j['prizeBanner'] as String,
       prizeVisibleWidth: _d(j['prizeVisibleWidth'] ?? 1),
       logo: LogoSpec.fromJson(j['logo'] as Map<String, dynamic>),
-      extras: ExtrasSpec.fromJson(j['extras'] as Map<String, dynamic>),
+      extras: extras,
+      flag: j['flag'] == null
+          ? FlagSpec.standard
+          : FlagSpec.fromJson(j['flag'] as Map<String, dynamic>),
       fields: (j['fields'] as Map<String, dynamic>)
           .map((k, v) => MapEntry(k, FieldRect.fromJson(v as Map<String, dynamic>))),
+      titleStyles: {
+        for (final style in CardStyle.values)
+          style: TitleStyleSpec.fromJson(
+            (rawStyles[style.name] as Map<String, dynamic>?) ?? const <String, dynamic>{},
+            style == CardStyle.game ? TitleStyleSpec.gameDefault : TitleStyleSpec.fanDefault,
+          ),
+      },
+      prizeStyles: {
+        for (final style in CardStyle.values)
+          style: PrizeStyleSpec.fromJson(
+            (rawPrize[style.name] as Map<String, dynamic>?) ?? const <String, dynamic>{},
+            style == CardStyle.game ? PrizeStyleSpec.gameDefault : PrizeStyleSpec.fromExtras(extras),
+          ),
+      },
     );
   }
 }

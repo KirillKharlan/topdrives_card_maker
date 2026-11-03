@@ -17,7 +17,7 @@ class FieldText extends StatelessWidget {
   Widget _onBaseline(double baselineY) {
     final span = TextSpan(children: [
       for (final (value, bold) in parts)
-        TextSpan(text: value, style: cardTextStyle(rect.size * scale, bold: bold)),
+        TextSpan(text: value, style: cardTextStyle(rect.size * scale, bold: bold, color: rect.color)),
     ]);
     final painter = TextPainter(
       text: span,
@@ -54,7 +54,7 @@ class FieldText extends StatelessWidget {
       child: Text.rich(
         TextSpan(children: [
           for (final (value, bold) in parts)
-            TextSpan(text: value, style: cardTextStyle(rect.size * scale, bold: bold)),
+            TextSpan(text: value, style: cardTextStyle(rect.size * scale, bold: bold, color: rect.color)),
         ]),
         maxLines: 1,
         softWrap: false,

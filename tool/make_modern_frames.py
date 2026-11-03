@@ -1,0 +1,137 @@
+"""Builds the frames of the "modern" template from the standard ones.
+
+Run from the project root:  python3 tool/make_modern_frames.py
+
+The modern look (seen on newer cards of the game): no stars, the tuning wrench
+sits lower and is bigger, the bottom shading strip is gone (more room for the
+photo), the stat panels fade in from the left, and the class block is a plain
+colour block with a pixelated fade above it and no class letter.
+Everything that is not listed here (title bar, logo block, country block, the
+words under the numbers) is taken from the standard frame unchanged.
+"""
+import os
+import numpy as np
+from PIL import Image
+
+FX = 2400 / 1338  # frames are 2400x1494, the card is 1338x828 units
+FY = 1494 / 828
+SRC = {'S': 'legendary', 'A': 'epic', 'B': 'ultra_rare', 'C': 'super_rare',
+       'D': 'rare', 'E': 'uncommon', 'F': 'common'}
+OUT = 'assets/frames/modern'
+PANEL_RGB = np.array([38.0, 36.0, 35.0])
+
+
+def px(x, y):
+    return int(round(x * FX)), int(round(y * FY))
+
+
+def region(x0, y0, x1, y1):
+    xa, ya = px(x0, y0)
+    xb, yb = px(x1, y1)
+    return slice(ya, yb), slice(xa, xb)
+
+
+def sprite(a, box, coverage):
+    """Cuts a sprite out of the frame: (coverage 0..1 array, position in pixels)."""
+    ys, xs = region(*box)
+    cov = coverage(a[ys, xs])
+    rows, cols = np.where(cov > 0.04)
+    top, left = rows.min(), cols.min()          # trim the empty border around the sprite
+    cov = cov[top:rows.max() + 1, left:cols.max() + 1]
+    return cov, (xs.start + left, ys.start + top)
+
+
+def put(out, cov, pos, rgb, opacity=1.0, scale=1.0, anchor=None):
+    """Draws a coverage mask in one colour on out (RGBA float), source-over."""
+    img = Image.fromarray((cov * 255).astype(np.uint8))
+    if scale != 1.0:
+        img = img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), Image.LANCZOS)
+    cov = np.asarray(img).astype(float) / 255.0 * opacity
+    x, y = anchor if anchor else pos
+    h, w = cov.shape
+    dst = out[y:y + h, x:x + w]
+    da = dst[..., 3:4] / 255.0
+    ca = cov[..., None]
+    oa = ca + da * (1 - ca)
+    rgb_new = np.where(oa > 0, (np.array(rgb) * ca + dst[..., :3] * da * (1 - ca)) / np.maximum(oa, 1e-6), 0)
+    dst[..., :3] = rgb_new
+    dst[..., 3:4] = oa * 255.0
+
+
+def build(letter, name):
+    a = np.array(Image.open(f'assets/frames/{name}.png').convert('RGBA')).astype(float)
+    out = a.copy()
+    cls = a[px(70, 480)[1], px(70, 480)[0], :3]          # class colour
+    panel_bg = a[px(70, 700)[1], px(70, 700)[0], :3]     # brown RQ panel behind the logo
+
+    # --- sprites to keep (cut before the areas are cleared) ---
+    tyres_cov, tyres_pos = sprite(a, (945, 765, 1062, 822),
+                                  lambda s: np.clip((s[..., :3].mean(axis=2) - 45) / 210, 0, 1) * (s[..., 3] > 100))
+    wrench_cov, wrench_pos = sprite(a, (175, 685, 295, 722),
+                                    lambda s: np.clip((s[..., :3].mean(axis=2) - 40) / 120, 0, 1) * (s[..., 3] > 60))
+    d = cls - panel_bg
+
+    def logo_cov(s):
+        c = np.clip(((s[..., :3] - panel_bg) @ d) / (d @ d), 0, 1)
+        return np.clip((c - 0.25) / 0.6, 0, 1)   # the panel's own shading is not part of the logo
+    logo_cov_arr, logo_pos = sprite(a, (20, 762, 122, 812), logo_cov)
+
+    # --- clear: class block + RQ panel, and the bottom strip with stars and wrench ---
+    out[region(0, 430, 141, 828)] = 0
+    out[region(141, 640, 1066, 828)] = 0
+
+    # --- stat panels: fade in from the left, keep the words ---
+    col = a[:, px(1200, 0)[0], 3]
+    rows = np.where(col > 0)[0]
+    rows = rows[rows >= px(0, 100)[1]]
+    spans, start, prev = [], rows[0], rows[0]
+    for r in rows[1:]:
+        if r - prev > 1:
+            spans.append((start, prev + 1))
+            start = r
+        prev = r
+    spans.append((start, prev + 1))
+    x0p, x1p = px(1060, 0)[0], px(1338, 0)[0]
+    xs = np.arange(x0p, x1p)
+    t = np.clip((xs - px(1066, 0)[0]) / (px(1240, 0)[0] - px(1066, 0)[0]), 0, 1)
+    panel_alpha = 0.12 + 0.60 * t                      # 12% at the left edge, 72% from x=1240
+    for ya, yb in spans:
+        block = a[ya:yb, x0p:x1p]
+        inside = block[..., 3] > 0
+        base = np.median(block[..., 3][inside])
+        c = np.clip((block[..., 3] - base) / (255 - base), 0, 1) * inside   # how much "word" a pixel is
+        pa = np.broadcast_to(panel_alpha, block.shape[:2]) * inside
+        oa = pa + c * (1 - pa)
+        rgb = (PANEL_RGB * pa[..., None] * (1 - c[..., None]) + 255 * c[..., None]) / np.maximum(oa[..., None], 1e-6)
+        out[ya:yb, x0p:x1p, :3] = np.where(inside[..., None], rgb, 0)
+        out[ya:yb, x0p:x1p, 3] = oa * 255
+
+    # --- new class block: solid colour with a pixelated fade above it ---
+    def rect(x0, y0, x1, y1, alpha):
+        ys, xs_ = region(x0, y0, x1, y1)
+        blk = out[ys, xs_]
+        da = blk[..., 3:4] / 255.0
+        oa = alpha + da * (1 - alpha)
+        blk[..., :3] = (cls * alpha + blk[..., :3] * da * (1 - alpha)) / np.maximum(oa, 1e-6)
+        blk[..., 3:4] = oa * 255
+    cols = [(0, 47, 685, [(570, 605, .30), (627, 660, .55)]),
+            (47, 94, 665, [(545, 580, .15), (580, 620, .30), (622, 663, .55)]),
+            (94, 141, 695, [(560, 595, .20), (597, 630, .35), (648, 692, .55)])]
+    for x0, x1, solid_top, tiles in cols:
+        for ty0, ty1, al in tiles:
+            rect(x0, ty0, x1, ty1, al)
+        rect(x0, solid_top, x1, 828, 1.0)
+
+    # --- sprites back: dark RQ logo on the block, words under the photo, wrench ---
+    put(out, logo_cov_arr, logo_pos, (40, 38, 42), scale=0.78, anchor=px(36, 799))
+    put(out, tyres_cov, tyres_pos, (255, 255, 255))
+    put(out, wrench_cov, wrench_pos, (255, 255, 255), opacity=0.45, scale=1.5, anchor=px(185, 750))
+
+    os.makedirs(OUT, exist_ok=True)
+    Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), 'RGBA').save(f'{OUT}/{letter}.png', optimize=True)
+
+
+if __name__ == '__main__':
+    for letter, name in SRC.items():
+        build(letter, name)
+        print('written', f'{OUT}/{letter}.png')
