@@ -70,6 +70,7 @@
     "points": [[1209.5, 0], [1338, 0], [1338, 97.5], [1189, 97.5]],
     "opacity": 0.78
   },
+
   "prizeStyles": {
     "game": {
       "paddingLeft": 62.7,

@@ -27,7 +27,10 @@ class CardProject {
     this.brandScale = 1.0,
     this.modelScale = 1.0,
     this.cardStyle = CardStyle.fan,
+<<<<<<< HEAD
     this.showFlag = false,
+=======
+>>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
     this.yearScale = 1.0,
     this.tagScale = 1.0,
     this.brand = 'Brand',
@@ -104,9 +107,12 @@ class CardProject {
 
   /// Fan-made or official (game) look of the title.
   CardStyle cardStyle;
+<<<<<<< HEAD
 
   /// The flag of [country] behind the country code (if the code has a flag).
   bool showFlag;
+=======
+>>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
   String brand;
   String model;
   String year;
@@ -162,7 +168,10 @@ class CardProject {
         'brandScale': brandScale,
         'modelScale': modelScale,
         'cardStyle': cardStyle.name,
+<<<<<<< HEAD
         'showFlag': showFlag,
+=======
+>>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
         'yearScale': yearScale,
         'tagScale': tagScale,
         'brand': brand,
@@ -219,7 +228,10 @@ class CardProject {
       brandScale: (j['brandScale'] as num?)?.toDouble() ?? legacyTitleScale,
       modelScale: (j['modelScale'] as num?)?.toDouble() ?? legacyTitleScale,
       cardStyle: parseCardStyle(j['cardStyle'] as String?),
+<<<<<<< HEAD
       showFlag: j['showFlag'] as bool? ?? false,
+=======
+>>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
       yearScale: (j['yearScale'] as num?)?.toDouble() ?? 1.0,
       tagScale: (j['tagScale'] as num?)?.toDouble() ?? 1.0,
       brand: s('brand', ''),

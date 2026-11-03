@@ -10,9 +10,13 @@ import '../../templates/template_spec.dart';
 import 'field_text.dart';
 import 'logo_tile.dart';
 import 'photo_layer.dart';
+<<<<<<< HEAD
 import 'flag_badge.dart';
 import 'title_text.dart';
 import '../../data/country_flags.dart';
+=======
+import 'title_text.dart';
+>>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
 
 /// The card itself, drawn at the template's native size (e.g. 1338x828).
 /// Layers, bottom to top: background, photo, class frame, logo, texts.
@@ -103,8 +107,11 @@ class CardView extends StatelessWidget {
               ),
             ),
             if (logoFile != null) _logo(),
+<<<<<<< HEAD
             if (project.showFlag && CountryFlags.has(project.country))
               FlagBadge(code: project.country, spec: t.flag),
+=======
+>>>>>>> bde53f785ffd4ae968faf6bb21b3de14bd0a3799
             // Brand keeps its size; the model fits itself into the rest of the line.
             TitleText(
               brand: project.brand,
