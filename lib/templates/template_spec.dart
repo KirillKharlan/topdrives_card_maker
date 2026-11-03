@@ -1,6 +1,6 @@
 import 'package:flutter/painting.dart';
 
-import '../../assets/data/models/card_style.dart';
+import '../data/models/card_style.dart';
 
 Color _hexColor(String hex) =>
     Color(int.parse(hex.replaceFirst('#', ''), radix: 16) | 0xFF000000);
