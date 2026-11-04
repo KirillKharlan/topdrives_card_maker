@@ -1,6 +1,6 @@
 import 'package:flutter/painting.dart';
 
-import '../../assets/data/models/card_style.dart';
+import '../data/models/card_style.dart';
 
 Color _hexColor(String hex) =>
     Color(int.parse(hex.replaceFirst('#', ''), radix: 16) | 0xFF000000);
@@ -259,12 +259,43 @@ class PrizeStyleSpec {
 
 /// A rectangle in card units.
 class RegionRect {
-  const RegionRect({required this.x, required this.y, required this.w, required this.h});
+  const RegionRect({
+    required this.x,
+    required this.y,
+    required this.w,
+    required this.h,
+    this.fadeLeft = 0,
+  });
 
   final double x, y, w, h;
 
-  factory RegionRect.fromJson(Map<String, dynamic> j) =>
-      RegionRect(x: _d(j['x']), y: _d(j['y']), w: _d(j['w']), h: _d(j['h']));
+  /// For a blurred region: the blur grows from nothing to full strength over
+  /// this width at the left edge, like the panels that fade in from clear glass.
+  final double fadeLeft;
+
+  factory RegionRect.fromJson(Map<String, dynamic> j) => RegionRect(
+        x: _d(j['x']),
+        y: _d(j['y']),
+        w: _d(j['w']),
+        h: _d(j['h']),
+        fadeLeft: _d(j['fadeLeft'] ?? 0),
+      );
+
+  /// The region as strips with their blur strength: one piece without a fade,
+  /// otherwise narrow strips that blur a little more each, then the full part.
+  List<({Rect rect, double sigma})> blurPieces(double sigma, {int steps = 12}) {
+    final fade = fadeLeft.clamp(0.0, w).toDouble();
+    if (fade <= 0) return [(rect: Rect.fromLTWH(x, y, w, h), sigma: sigma)];
+    final strip = fade / steps;
+    return [
+      for (var i = 0; i < steps; i++)
+        (
+          rect: Rect.fromLTWH(x + strip * i, y, strip + 0.5, h),
+          sigma: sigma * (i + 1) / (steps + 1),
+        ),
+      if (w > fade) (rect: Rect.fromLTWH(x + fade, y, w - fade, h), sigma: sigma),
+    ];
+  }
 }
 
 /// The logo slot of the frame (the dark tile in the top-left corner).
