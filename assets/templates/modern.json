@@ -44,14 +44,14 @@
   },
   "titleStyles": {
     "fan": {
-      "x": 158,
+      "x": 155,
       "w": 890,
-      "brandSize": 71.8,
-      "modelSize": 71.8,
-      "baseline": 68,
-      "gapEm": 0.35,
+      "brandSize": 60.6,
+      "modelSize": 61.1,
+      "baseline": 68.5,
+      "gapEm": 0.3,
       "wrap": true,
-      "twoLineScale": 0.7,
+      "twoLineScale": 0.78,
       "lineHeight": 0.93
     },
     "game": {
@@ -133,7 +133,7 @@
       "baseline": 738
     },
     "tyre": {
-      "x": 420,
+      "x": 405,
       "y": 750.5,
       "w": 516,
       "h": 66,

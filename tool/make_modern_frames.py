@@ -25,6 +25,14 @@ RAMP_END = 1260       # x (card units) where they are darkest; the template's bl
 CHECK_TOP = 690       # the solid colour block starts here, the chequered flag sits above it
 CHECK_CELL = 35       # size of a square of the chequered flag
 CHECK_ALPHA = [1.0, 0.60, 0.38, 0.20, 0.10]   # row by row, upwards
+TYRES_DX = -15        # units: the words under the photo end at x=1034 like on the game's cards
+# The title row is neutral grey on the new cards (the standard frame is warm brown). Colours measured
+# on a card of the new design; transparency of every part is kept from the standard frame.
+TITLE_LOGO = (58, 58, 58)
+TITLE_BAR = (84, 84, 86)
+TITLE_YEAR = (55, 55, 56)
+TITLE_COUNTRY = (48, 47, 46)
+COUNTRY_EDGE = (1209.5, -0.2082)   # slanted left edge of the country block: x = a + b * y
 
 
 def px(x, y):
@@ -69,6 +77,17 @@ def build(letter, name):
     out = a.copy()
     cls = a[px(70, 480)[1], px(70, 480)[0], :3]          # class colour
     panel_bg = a[px(70, 700)[1], px(70, 700)[0], :3]     # brown RQ panel behind the logo
+
+    # --- title row: recolour the four parts, keep their shapes and transparency ---
+    ys_title = slice(0, px(0, 99.5)[1])
+    xs_all = np.arange(a.shape[1]) / FX
+    ys_all = np.arange(ys_title.stop) / FY
+    edge = COUNTRY_EDGE[0] + COUNTRY_EDGE[1] * ys_all[:, None]
+    X = np.broadcast_to(xs_all[None, :], (ys_title.stop, a.shape[1]))
+    part = np.where(X < 141, 0, np.where(X < 1062, 1, np.where(X < edge, 2, 3)))
+    for idx, rgb in enumerate((TITLE_LOGO, TITLE_BAR, TITLE_YEAR, TITLE_COUNTRY)):
+        sel = (part == idx) & (out[ys_title, :, 3] > 0)
+        out[ys_title, :, :3][sel] = rgb
 
     # --- sprites to keep (cut before the areas are cleared) ---
     tyres_cov, tyres_pos = sprite(a, (945, 765, 1062, 822),
@@ -130,7 +149,7 @@ def build(letter, name):
 
     # --- sprites back: dark RQ logo on the block, words under the photo, wrench ---
     put(out, logo_cov_arr, logo_pos, (40, 38, 42), scale=0.78, anchor=px(36, 799))
-    put(out, tyres_cov, tyres_pos, (255, 255, 255))
+    put(out, tyres_cov, tyres_pos, (255, 255, 255), anchor=(tyres_pos[0] + round(TYRES_DX * FX), tyres_pos[1]))
     put(out, wrench_cov, wrench_pos, (255, 255, 255), opacity=0.45, scale=1.5, anchor=px(185, 750))
 
     os.makedirs(OUT, exist_ok=True)

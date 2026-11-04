@@ -139,7 +139,8 @@ claude/claude.md                 this file
   Measured from a Porsche 911 GT2 card: no stars/bottom strip, wrench 1.5x at (185,750), stat panels fading in from fully clear
   (alpha 0 -> 0.72 over x 1066..1260; the template's blur fades over the same width via `blurRegions[].fadeLeft`),
   colour block topped by a see-through chequered flag (35-unit squares, 3 columns, alpha fading upwards; class colour),
-  dark RQ number (`fields.rq.color`, y 699). Only class A was seen. `drivePrefix` has an explicit baseline (738, measured on a phone: 742 put the letter 3 px low) so the
+  dark RQ number (`fields.rq.color`, y 699). Title row recoloured neutral grey (logo 58, bar 84/84/86, year 55, country 48),
+  Modern has its own `titleStyles.fan` (brand 54.5, baseline 68.5, x 155) and tyres shifted -15 (frame sprite + `fields.tyre.x` 405). Only class A was seen. `drivePrefix` has an explicit baseline (738, measured on a phone: 742 put the letter 3 px low) so the
   F/R/4 stands on the baseline of the baked "WD".
 - Flag: `CardProject.showFlag`, `CountryFlags` (painted, simplified), `FlagBadge` between frame and texts, polygon and
   opacity in template `flag`. Works in every template.
