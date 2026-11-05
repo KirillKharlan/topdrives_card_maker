@@ -139,7 +139,10 @@ claude/claude.md                 this file
   Measured from a Porsche 911 GT2 card: no stars/bottom strip, wrench 1.5x at (185,750), stat panels fading in from fully clear
   (alpha 0 -> 0.72 over x 1066..1260; the template's blur fades over the same width via `blurRegions[].fadeLeft`),
   colour block topped by a see-through chequered flag (35-unit squares, 3 columns, alpha fading upwards; class colour),
-  dark RQ number (`fields.rq.color`, y 699). Stat panels re-spaced to the reference (gaps centred at 288/471/654, `NEW_PANELS`), baked words moved down per group
+  dark RQ number (`fields.rq.color`, y 699). Everything measured ON the reference card, not by eye: stat panels = neutral grey 50 with measured alpha curve (0 at x=1062, .78 at 1191, .90 at the
+  right edge; fitted from the clear photo in the gaps between panels), blur fadeLeft 130; title row parts (logo 58 opaque, bar 47 a=.55, year/country 53
+  a=.95); chequered flag = tilted by 0.19 (10.8 deg), squares 26.5 tall / 46.5 wide, alpha (u-562)/116, solid block from u=678.5; class A colour
+  (147,80,255). Stat panels re-spaced to the reference (gaps centred at 288/471/654, `NEW_PANELS`), baked words moved down per group
   (`WORD_GROUPS`), tyres word dx -12 / dy +5, `blurRegions` y/h and `drivePrefix.baseline` 743 follow. Checked against a card of
   the new design: static words within 1-2 units. Calibration trick: use the reference card as the photo (zoom 1, no shift) and
   compare the dynamic fields by eye/measure. Title row recoloured neutral grey (logo 58, bar 84/84/86, year 55, country 48),
