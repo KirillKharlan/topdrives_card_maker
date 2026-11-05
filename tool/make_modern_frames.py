@@ -25,7 +25,11 @@ RAMP_END = 1260       # x (card units) where they are darkest; the template's bl
 CHECK_TOP = 690       # the solid colour block starts here, the chequered flag sits above it
 CHECK_CELL = 35       # size of a square of the chequered flag
 CHECK_ALPHA = [1.0, 0.60, 0.38, 0.20, 0.10]   # row by row, upwards
-TYRES_DX = -15        # units: the words under the photo end at x=1034 like on the game's cards
+TYRES_DX = -12        # units: the word "Tyres" under the photo ends at x=1034 like on the game's cards
+TYRES_DY = 5          # and sits 5 units lower than in the standard frame
+# Stat panels of the new design (card units) and how far the words baked into the standard panels move down.
+NEW_PANELS = [(106, 285), (291, 468), (474, 651), (657, 828)]
+WORD_GROUPS = [(99, 284, 3.8), (284, 466, 4.6), (466, 650, 5.6), (650, 757, 5.0), (757, 828, 6.3)]
 # The title row is neutral grey on the new cards (the standard frame is warm brown). Colours measured
 # on a card of the new design; transparency of every part is kept from the standard frame.
 TITLE_LOGO = (58, 58, 58)
@@ -105,7 +109,7 @@ def build(letter, name):
     out[region(0, 430, 141, 828)] = 0
     out[region(141, 640, 1066, 828)] = 0
 
-    # --- stat panels: fade in from the left, keep the words ---
+    # --- stat panels: fade in from the left; panels and words sit where the new design has them ---
     col = a[:, px(1200, 0)[0], 3]
     rows = np.where(col > 0)[0]
     rows = rows[rows >= px(0, 100)[1]]
@@ -117,18 +121,31 @@ def build(letter, name):
         prev = r
     spans.append((start, prev + 1))
     x0p, x1p = px(1060, 0)[0], px(1338, 0)[0]
-    xs = np.arange(x0p, x1p)
-    t = np.clip((xs - px(1066, 0)[0]) / (px(RAMP_END, 0)[0] - px(1066, 0)[0]), 0, 1)
-    panel_alpha = PANEL_MAX * t                        # fully clear at the left edge, PANEL_MAX from RAMP_END on
+    H = out.shape[0]
+    # how much of a pixel is a "word" (TOP SPEED, DRIVE...), read out of the standard panels
+    word_old = np.zeros((H, x1p - x0p))
     for ya, yb in spans:
         block = a[ya:yb, x0p:x1p]
         inside = block[..., 3] > 0
         base = np.median(block[..., 3][inside])
-        c = np.clip((block[..., 3] - base) / (255 - base), 0, 1) * inside   # how much "word" a pixel is
-        pa = np.broadcast_to(panel_alpha, block.shape[:2]) * inside
+        word_old[ya:yb] = np.clip((block[..., 3] - base) / (255 - base), 0, 1) * inside
+    word = np.zeros_like(word_old)
+    for y0u, y1u, dy in WORD_GROUPS:                    # move every group of words to its new place
+        ya, yb = px(0, y0u)[1], px(0, y1u)[1]
+        shift = round(dy * FY)
+        dst_b = min(H, yb + shift)
+        word[ya + shift:dst_b] = np.maximum(word[ya + shift:dst_b], word_old[ya:ya + (dst_b - ya - shift)])
+    out[px(0, 99)[1]:, x0p:x1p] = 0                     # the old panels go
+    xs = np.arange(x0p, x1p)
+    t = np.clip((xs - px(1066, 0)[0]) / (px(RAMP_END, 0)[0] - px(1066, 0)[0]), 0, 1)
+    panel_alpha = PANEL_MAX * t                        # fully clear at the left edge, PANEL_MAX from RAMP_END on
+    for u0, u1 in NEW_PANELS:
+        ya, yb = px(0, u0)[1], px(0, u1)[1]
+        pa = np.broadcast_to(panel_alpha, (yb - ya, x1p - x0p))
+        c = word[ya:yb]
         oa = pa + c * (1 - pa)
         rgb = (PANEL_RGB * pa[..., None] * (1 - c[..., None]) + 255 * c[..., None]) / np.maximum(oa[..., None], 1e-6)
-        out[ya:yb, x0p:x1p, :3] = np.where(inside[..., None], rgb, 0)
+        out[ya:yb, x0p:x1p, :3] = np.where(oa[..., None] > 0, rgb, 0)
         out[ya:yb, x0p:x1p, 3] = oa * 255
 
     # --- new class block: solid colour, and above it a see-through chequered flag ---
@@ -149,7 +166,7 @@ def build(letter, name):
 
     # --- sprites back: dark RQ logo on the block, words under the photo, wrench ---
     put(out, logo_cov_arr, logo_pos, (40, 38, 42), scale=0.78, anchor=px(36, 799))
-    put(out, tyres_cov, tyres_pos, (255, 255, 255), anchor=(tyres_pos[0] + round(TYRES_DX * FX), tyres_pos[1]))
+    put(out, tyres_cov, tyres_pos, (255, 255, 255), anchor=(tyres_pos[0] + round(TYRES_DX * FX), tyres_pos[1] + round(TYRES_DY * FY)))
     put(out, wrench_cov, wrench_pos, (255, 255, 255), opacity=0.45, scale=1.5, anchor=px(185, 750))
 
     os.makedirs(OUT, exist_ok=True)
