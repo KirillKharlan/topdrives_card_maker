@@ -118,7 +118,7 @@ def build(letter, name):
     logo_cov_arr, logo_pos = sprite(a, (20, 762, 122, 812), logo_cov)
 
     # --- clear: class block + RQ panel, and the bottom strip with stars and wrench ---
-    out[region(0, 430, 141, 828)] = 0
+    out[region(0, 430, 150, 828)] = 0
     out[region(141, 640, 1066, 828)] = 0
 
     # --- stat panels: fade in from the left; panels and words sit where the new design has them ---
@@ -139,8 +139,9 @@ def build(letter, name):
     for ya, yb in spans:
         block = a[ya:yb, x0p:x1p]
         inside = block[..., 3] > 0
-        base = np.median(block[..., 3][inside])
-        word_old[ya:yb] = np.clip((block[..., 3] - base) / (255 - base), 0, 1) * inside
+        grey = block[..., :3].mean(axis=2)
+        base = np.median(grey[inside])                       # the panel's own brightness
+        word_old[ya:yb] = np.clip((grey - base) / (255 - base), 0, 1) * inside
     word = np.zeros_like(word_old)
     for y0u, y1u, dy in WORD_GROUPS:                    # move every group of words to its new place
         ya, yb = px(0, y0u)[1], px(0, y1u)[1]
