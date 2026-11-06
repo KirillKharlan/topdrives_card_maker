@@ -84,7 +84,7 @@ class FlagSpec {
 
   static const standard = FlagSpec(
     points: [Offset(1209.5, 0), Offset(1338, 0), Offset(1338, 97.5), Offset(1189, 97.5)],
-    opacity: 0.78,
+    opacity: 0.62,
   );
 
   factory FlagSpec.fromJson(Map<String, dynamic> j) {

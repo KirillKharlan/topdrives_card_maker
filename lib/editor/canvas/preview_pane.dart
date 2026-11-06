@@ -36,6 +36,7 @@ class PreviewPane extends StatelessWidget {
                     lengthMs: c.project.videoLengthMs,
                     hidden: c.videoHidden,
                   ),
+            liveVideo: c.videoFile != null && !c.videoHidden,
             cardKey: c.cardKey,
             fullKey: c.fullKey,
           ),

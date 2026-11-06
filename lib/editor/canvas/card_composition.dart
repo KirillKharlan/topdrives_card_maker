@@ -20,6 +20,7 @@ class CardComposition extends StatelessWidget {
     this.logoFile,
     this.fillFile,
     this.videoLayer,
+    this.liveVideo = false,
     this.cardKey,
     this.fullKey,
   });
@@ -30,6 +31,7 @@ class CardComposition extends StatelessWidget {
   final File? logoFile;
   final File? fillFile;
   final Widget? videoLayer;
+  final bool liveVideo;
   final GlobalKey? cardKey;
   final GlobalKey? fullKey;
 
@@ -56,6 +58,7 @@ class CardComposition extends StatelessWidget {
                   logoFile: logoFile,
                   fillFile: fillFile,
                   videoLayer: videoLayer,
+                  liveVideo: liveVideo,
                 ),
               ),
               if (project.prize) PrizeStrip(project: project, template: template),

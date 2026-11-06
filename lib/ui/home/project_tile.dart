@@ -75,6 +75,7 @@ class ProjectTile extends StatelessWidget {
                       photoFile: store.photoFileFor(project),
                       logoFile: store.logos.fileOf(project.logoId),
                       photoMaxWidth: 700,
+                      lite: true,
                       fillFile: store.smartFillFor(project),
                     ),
                   ),

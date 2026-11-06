@@ -74,7 +74,35 @@ class TitleLayout {
   /// Half the cap height of the card font, in font sizes (cap height 0.711).
   static const _halfCap = 0.3555;
 
+  /// The last layouts. The card is rebuilt on every frame of a drag, and a long
+  /// model name needs dozens of text measurements to fit, so the result is reused
+  /// while the text, the sizes and the style stay the same.
+  static final Map<String, TitleLayout> _cache = {};
+
   static TitleLayout compute({
+    required String brand,
+    required String model,
+    required TitleStyleSpec style,
+    required double textScale,
+    required double brandScale,
+    required double modelScale,
+  }) {
+    final cacheKey = '${identityHashCode(style)}|$textScale|$brandScale|$modelScale|$brand\u0000$model';
+    final cached = _cache[cacheKey];
+    if (cached != null) return cached;
+    final layout = _compute(
+      brand: brand,
+      model: model,
+      style: style,
+      textScale: textScale,
+      brandScale: brandScale,
+      modelScale: modelScale,
+    );
+    if (_cache.length >= 24) _cache.remove(_cache.keys.first);
+    return _cache[cacheKey] = layout;
+  }
+
+  static TitleLayout _compute({
     required String brand,
     required String model,
     required TitleStyleSpec style,
