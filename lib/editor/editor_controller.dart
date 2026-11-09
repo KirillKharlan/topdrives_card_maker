@@ -15,6 +15,12 @@ import '../video/video_frames.dart';
 
 /// State of the card being edited. All changes go through [update], which
 /// repaints the preview and schedules an autosave.
+/// Tells only the card preview that something changed (used while a finger moves
+/// the photo: rebuilding the whole form under the card on every frame is wasted work).
+class PreviewTick extends ChangeNotifier {
+  void ping() => notifyListeners();
+}
+
 class EditorController extends ChangeNotifier {
   EditorController({required this.store, required this.project});
 
@@ -56,10 +62,17 @@ class EditorController extends ChangeNotifier {
 
   bool get fillIsCurrent => smartFillFile != null;
 
-  void update(void Function(CardProject p) change) {
+  /// Notifies everything that listens (the form too), or with [form] false only the card preview.
+  final PreviewTick previewTick = PreviewTick();
+
+  void update(void Function(CardProject p) change, {bool form = true}) {
     change(project);
     project.updatedAt = DateTime.now();
-    notifyListeners();
+    if (form) {
+      notifyListeners();
+    } else {
+      previewTick.ping();
+    }
     _saveTimer?.cancel();
     _saveTimer = Timer(
       const Duration(milliseconds: 600),
@@ -249,8 +262,11 @@ class EditorController extends ChangeNotifier {
         dy: t.dy + delta.dy / displayScale / template.height,
         rotation: _gestureStartRotation + rotation,
       ).clamped();
-    });
+    }, form: false);
   }
+
+  /// The finger is lifted: now the sliders of the form catch up with the framing.
+  void gestureEnd() => notifyListeners();
 
   Future<void> flush() async {
     _saveTimer?.cancel();
@@ -260,6 +276,7 @@ class EditorController extends ChangeNotifier {
   @override
   void dispose() {
     _saveTimer?.cancel();
+    previewTick.dispose();
     super.dispose();
   }
 }

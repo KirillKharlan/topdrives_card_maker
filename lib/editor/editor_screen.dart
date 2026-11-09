@@ -49,7 +49,7 @@ class _EditorScreenState extends State<EditorScreen> {
           Padding(
             padding: const EdgeInsets.all(8),
             child: ListenableBuilder(
-              listenable: _c,
+              listenable: Listenable.merge([_c, _c.previewTick]),
               builder: (_, __) => PreviewPane(controller: _c),
             ),
           ),

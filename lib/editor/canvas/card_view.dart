@@ -165,48 +165,59 @@ class CardView extends StatelessWidget {
               Positioned.fill(key: const ValueKey('video-layer'), child: videoLayer!),
             // Frosted glass: blur the photo behind the semi-transparent parts of the frame.
             if (photoFile != null && t.blurSigma > 0 && !lite) ..._frostedGlass(t),
+            // Frame, logo, flag and texts do not move while the photo is dragged: one cached layer,
+            // so a drag only repaints the photo (and the frosted glass), not the whole card.
             Positioned.fill(
-              child: Image.asset(
-                frame,
-                fit: BoxFit.fill,
-                filterQuality: FilterQuality.high,
-                gaplessPlayback: true,
-              ),
-            ),
-            if (logoFile != null) _logo(),
-            if (project.showFlag && CountryFlags.has(project.country))
-              FlagBadge(code: project.country, spec: t.flag),
+              child: RepaintBoundary(
+                child: Stack(
+                  children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    frame,
+                    cacheWidth: lite ? 700 : null,
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.high,
+                    gaplessPlayback: true,
+                  ),
+                ),
+                if (logoFile != null) _logo(),
+                if (project.showFlag && CountryFlags.has(project.country))
+                  FlagBadge(code: project.country, spec: t.flag),
 
-            // Brand keeps its size; the model fits itself into the rest of the line.
-            TitleText(
-              brand: project.brand,
-              model: project.model,
-              style: t.titleStyle(project.cardStyle),
-              textScale: t.textScale,
-              brandScale: project.brandScale,
-              modelScale: project.modelScale,
-            ),
-            FieldText(
-              scale: t.textScale * project.yearScale,
-              rect: t.field('year'),
-              parts: [(project.year, false)],
-            ),
-            FieldText(scale: t.textScale, rect: t.field('country'), parts: [(project.country, true)]),
-            FieldText(scale: t.textScale, rect: t.field('topSpeed'), parts: [(project.topSpeed, true)]),
-            FieldText(scale: t.textScale, rect: t.field('accel'), parts: [(project.accelDisplay, true)]),
-            FieldText(scale: t.textScale, rect: t.field('handling'), parts: [(project.handling, true)]),
-            // The frame already contains "WD"; we add only R / F / 4.
-            FieldText(scale: t.textScale, rect: t.field('drivePrefix'), parts: [(drivePrefix, true)]),
-            // The word "Tyres" is part of the frame; we add only the tyre name before it.
-            ValueListenableBuilder<double>(
-              valueListenable: LayoutTweaks.tyreNameOffset,
-              builder: (context, offset, _) => FieldText(
-                scale: t.textScale,
-                rect: t.field('tyre').shifted(offset),
-                parts: [(project.tyre.toUpperCase(), false)],
+                // Brand keeps its size; the model fits itself into the rest of the line.
+                TitleText(
+                  brand: project.brand,
+                  model: project.model,
+                  style: t.titleStyle(project.cardStyle),
+                  textScale: t.textScale,
+                  brandScale: project.brandScale,
+                  modelScale: project.modelScale,
+                ),
+                FieldText(
+                  scale: t.textScale * project.yearScale,
+                  rect: t.field('year'),
+                  parts: [(project.year, false)],
+                ),
+                FieldText(scale: t.textScale, rect: t.field('country'), parts: [(project.country, true)]),
+                FieldText(scale: t.textScale, rect: t.field('topSpeed'), parts: [(project.topSpeed, true)]),
+                FieldText(scale: t.textScale, rect: t.field('accel'), parts: [(project.accelDisplay, true)]),
+                FieldText(scale: t.textScale, rect: t.field('handling'), parts: [(project.handling, true)]),
+                // The frame already contains "WD"; we add only R / F / 4.
+                FieldText(scale: t.textScale, rect: t.field('drivePrefix'), parts: [(drivePrefix, true)]),
+                // The word "Tyres" is part of the frame; we add only the tyre name before it.
+                ValueListenableBuilder<double>(
+                  valueListenable: LayoutTweaks.tyreNameOffset,
+                  builder: (context, offset, _) => FieldText(
+                    scale: t.textScale,
+                    rect: t.field('tyre').shifted(offset),
+                    parts: [(project.tyre.toUpperCase(), false)],
+                  ),
+                ),
+                FieldText(scale: t.textScale, rect: t.field('rq'), parts: [(project.rq, true)]),
+                  ],
+                ),
               ),
             ),
-            FieldText(scale: t.textScale, rect: t.field('rq'), parts: [(project.rq, true)]),
           ],
         ),
       ),
