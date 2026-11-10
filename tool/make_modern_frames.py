@@ -189,6 +189,17 @@ def build(letter, name):
     put(out, tyres_cov, tyres_pos, (255, 255, 255), anchor=(tyres_pos[0] + round(TYRES_DX * FX), tyres_pos[1] + round(TYRES_DY * FY)))
     put(out, wrench_cov, wrench_pos, (255, 255, 255), opacity=0.45, scale=1.5, anchor=px(185, 750))
 
+    # --- the rounded card corners: the standard frame paints them as opaque black pixels; every part above
+    # (title row, class block, panels) was drawn over them, so they are copied back at the very end ---
+    corner = 40
+    H, W = out.shape[:2]
+    for ys_c, xs_c in ((slice(0, corner), slice(0, corner)), (slice(0, corner), slice(W - corner, W)),
+                       (slice(H - corner, H), slice(0, corner)), (slice(H - corner, H), slice(W - corner, W))):
+        lum = a[ys_c, xs_c, :3].mean(axis=2)
+        m = np.clip((30 - lum) / 30, 0, 1)[..., None]       # 1 on the black corner, soft on its edge
+        out[ys_c, xs_c, :3] = out[ys_c, xs_c, :3] * (1 - m)
+        out[ys_c, xs_c, 3:4] = out[ys_c, xs_c, 3:4] * (1 - m) + 255 * m
+
     os.makedirs(OUT, exist_ok=True)
     Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), 'RGBA').save(f'{OUT}/{letter}.png', optimize=True)
 
