@@ -60,25 +60,16 @@ class EditorController extends ChangeNotifier {
   /// True while the card is captured as a picture: the live video is left out.
   bool videoHidden = false;
 
-  /// Width the photo is decoded at. 2600 is plenty for the screen; a sharp export of a
-  /// zoomed-in photo temporarily asks for more (see [withSharpPhoto]).
-  int photoDecodeWidth = 2600;
+  /// Width the photo is decoded at. It never changes while the app runs: switching it right
+  /// before a capture (v13 tried 4096) made the exported picture come out with a corrupted
+  /// block in the top-left corner (garbage pixels, black rectangle).
+  final int photoDecodeWidth = 2600;
 
-  /// Runs [action] (a capture of the card) with the photo decoded at up to 4096 px
-  /// wide, so a photo that is zoomed in on the card does not turn soft in the export.
+  /// Runs [action] (a capture of the card) once the card has been drawn in a settled frame.
+  /// The photo keeps the decode that the editor already shows.
   Future<T> withSharpPhoto<T>(BuildContext context, Future<T> Function() action) async {
-    final file = photoFile;
-    if (file == null) return action();
-    photoDecodeWidth = 4096;
-    notifyListeners();
-    try {
-      if (context.mounted) await precacheImage(ResizeImage(FileImage(file), width: 4096), context);
-      await WidgetsBinding.instance.endOfFrame;
-      return await action();
-    } finally {
-      photoDecodeWidth = 2600;
-      notifyListeners();
-    }
+    await WidgetsBinding.instance.endOfFrame;
+    return action();
   }
 
   /// While a video is exported: the frame of the video shown in place of the photo.

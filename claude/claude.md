@@ -185,8 +185,14 @@ claude/claude.md                 this file
 
 ## Photo quality and fill (v13)
 - The card used to be exported at 1338x828 (pixelRatio 1) although the frames are 2400 px wide. Export now has "Picture size": Standard 1338 px /
-  High 2400 px (default, pixelRatio 2400/1338). `EditorController.withSharpPhoto` decodes the photo at up to 4096 px wide during the capture
+  High 2400 px (default, pixelRatio 2400/1338). `EditorController.withSharpPhoto` used to decode the photo at up to 4096 px wide during the capture
   (preview stays at 2600) so a zoomed-in photo does not turn soft.
+  v13 BUG (seen in the user's screenshots, both 1338 and 2400 exports): a 512x512 block in the top-left corner of the saved PNG was black /
+  garbage and pieces of the photo sat in the wrong place, logo and title were hidden. Standard-size export from before v13 was fine, so the
+  cause is the decode-width swap right before the capture (new ResizeImage key -> images replaced and disposed while the capture runs).
+  v18 removed the swap: `photoDecodeWidth` is a constant 2600, `withSharpPhoto` only waits for a settled frame. Not verified on a device;
+  if 2400 px still shows the block, the next suspect is the capture size itself (BackdropFilter / ShaderMask layers at pixelRatio 1.79).
+  Do NOT change the photo's decode width around a capture again. Sharp photo on its own: "Save cropped photo" (up to 4096 px).
 - Fill (`lib/photo_fill`): work size 400 -> 480 px (long side); `_correctSeam` spreads the colour jump between the filled area and the photo into the fill
   (fades over ~10 working px; texture untouched). NOT benchmarked against the old result: a Python PatchMatch stand-in was too weak to be a test
   (13 dB even before correction), so only the logic is verified. To judge the fill properly we need ORIGINAL photos (not screenshots).
