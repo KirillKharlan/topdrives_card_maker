@@ -4,6 +4,9 @@
   have this permission by default).
 - WRITE_EXTERNAL_STORAGE (API <= 29): saving PNGs to the gallery on old Android.
 - Human-readable app name.
+- In-app update: REQUEST_INSTALL_PACKAGES, a FileProvider (UpdateFileProvider, authority
+  <applicationId>.updates, folder cache/updates) and the channel "card_maker/update" that opens
+  the system installer for the downloaded APK (ApkInstaller.kt).
 - Lint: the release build runs Android lint ("lintVitalAnalyzeRelease"); its StopShip
   check crashes inside lint (NoSuchMethodError in JavaDocParser) with some AGP / lint
   versions and fails the whole build. Lint results are not needed for the APK, so lint
@@ -40,6 +43,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        ApkInstaller.register(this, flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "card_maker/video")
             .setMethodCallHandler { call, result ->
                 worker.execute {
@@ -107,6 +111,57 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private val NOT_IMPLEMENTED = Any()
+    }
+}
+"""
+
+KOTLIN_INSTALLER = """package __PACKAGE__
+
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.core.content.FileProvider
+import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.MethodChannel
+import java.io.File
+
+// Own subclass, so the manifest does not clash with the providers of other plugins.
+class UpdateFileProvider : FileProvider()
+
+// Channel "card_maker/update": install(path) opens the system installer for the APK the app
+// downloaded. Answers "started", or "permission" when Android first needs the
+// "install unknown apps" permission (its settings page is opened then).
+object ApkInstaller {
+    fun register(activity: Activity, messenger: BinaryMessenger) {
+        MethodChannel(messenger, "card_maker/update").setMethodCallHandler { call, result ->
+            if (call.method != "install") {
+                result.notImplemented()
+                return@setMethodCallHandler
+            }
+            try {
+                val path = call.argument<String>("path")!!
+                if (Build.VERSION.SDK_INT >= 26 && !activity.packageManager.canRequestPackageInstalls()) {
+                    val settings = Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + activity.packageName)
+                    )
+                    settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    activity.startActivity(settings)
+                    result.success("permission")
+                    return@setMethodCallHandler
+                }
+                val uri = FileProvider.getUriForFile(activity, activity.packageName + ".updates", File(path))
+                val install = Intent(Intent.ACTION_VIEW)
+                install.setDataAndType(uri, "application/vnd.android.package-archive")
+                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                activity.startActivity(install)
+                result.success("started")
+            } catch (e: Exception) {
+                result.error("install_failed", e.message, null)
+            }
+        }
     }
 }
 """
@@ -265,6 +320,10 @@ permissions = [
         "android.permission.WRITE_EXTERNAL_STORAGE",
         '<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>',
     ),
+    (
+        "android.permission.REQUEST_INSTALL_PACKAGES",
+        '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>',
+    ),
 ]
 block = "".join(f"    {tag}\n" for name, tag in permissions if name not in text)
 if block:
@@ -286,6 +345,38 @@ activity.write_text(KOTLIN.replace("__PACKAGE__", package), encoding="utf-8")
     KOTLIN_ENCODER.replace("__PACKAGE__", package), encoding="utf-8"
 )
 print("MainActivity.kt and Mp4Encoder.kt written (" + package + ")")
+
+# ---- in-app update: installer channel, FileProvider and its folder list ----
+(activity.parent / "ApkInstaller.kt").write_text(
+    KOTLIN_INSTALLER.replace("__PACKAGE__", package), encoding="utf-8"
+)
+xml_dir = pathlib.Path("android/app/src/main/res/xml")
+xml_dir.mkdir(parents=True, exist_ok=True)
+(xml_dir / "update_file_paths.xml").write_text(
+    '<?xml version="1.0" encoding="utf-8"?>\n'
+    "<paths>\n"
+    '    <cache-path name="updates" path="updates/" />\n'
+    "</paths>\n",
+    encoding="utf-8",
+)
+provider = (
+    '        <provider\n'
+    '            android:name="' + package + '.UpdateFileProvider"\n'
+    '            android:authorities="${applicationId}.updates"\n'
+    '            android:exported="false"\n'
+    '            android:grantUriPermissions="true">\n'
+    '            <meta-data\n'
+    '                android:name="android.support.FILE_PROVIDER_PATHS"\n'
+    '                android:resource="@xml/update_file_paths" />\n'
+    '        </provider>\n'
+)
+manifest_text = manifest.read_text(encoding="utf-8")
+if "UpdateFileProvider" not in manifest_text:
+    if "</application>" not in manifest_text:
+        raise SystemExit("AndroidManifest.xml has no </application>: the update provider cannot be added")
+    manifest_text = manifest_text.replace("    </application>", provider + "    </application>", 1)
+    manifest.write_text(manifest_text, encoding="utf-8")
+print("ApkInstaller.kt, update_file_paths.xml and the FileProvider added")
 
 # ---- lint: do not let a crash inside Android lint fail the release build ----
 LINT_KTS = """

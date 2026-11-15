@@ -19,6 +19,10 @@ class UpdateInfo {
   /// Direct link to the APK (falls back to the release page).
   final String downloadUrl;
   final String notes;
+
+  /// True when [downloadUrl] points at the APK itself (not at the release page),
+  /// so the app can download and install it without a browser.
+  bool get isDirectApk => downloadUrl.toLowerCase().endsWith('.apk');
 }
 
 class UpdateCheckResult {

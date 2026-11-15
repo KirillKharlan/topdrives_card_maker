@@ -75,7 +75,7 @@ claude/claude.md                 this file
 - Axis-exact moving: `PhotoMoveMode` (lib/editor/photo_move_mode.dart: free / auto / horizontal / vertical) lives in `EditorController.moveMode`
   (not saved with the card). `gestureUpdate` passes the finger delta through `_allowedMovement`; `auto` collects movement until
   `axisLockDistance` (12 screen px), then locks the dominant axis until `gestureStart` resets it. `setPhotoShift` (sliders, snaps |v|<0.01 to 0)
-  and `nudgePhoto` (step 0.001, rounded to 4 decimals) set dx/dy exactly. Axes are card axes, independent of photo rotation. Not compiled.
+  and `nudgePhoto` (step 0.001, rounded to 4 decimals) set dx/dy exactly; `resetPhotoPosition` zeroes dx/dy only (scale and rotation kept). Axes are card axes, independent of photo rotation. Not compiled.
 - `PhotoTransform`: scale 0.4..6, dx/dy (fraction of card, +-1), rotation (radians). Original files are never
   modified; originals live in the photo library.
 - `paintPhoto()` (photo_painter.dart) is the single drawing routine used by the preview, the card export,
@@ -112,6 +112,11 @@ claude/claude.md                 this file
   over an installed app would stop working.
 - Artifacts (30 days) and GitHub Releases (permanent) both get the APK. The app checks the latest Release
   at start-up (public repository required) and offers the download.
+- In-app update (not compiled here): `UpdateDownloader` (lib/update/update_downloader.dart) streams the release APK into
+  `<cache>/updates/`, `ApkInstaller` (apk_installer.dart) calls the Kotlin channel `card_maker/update` -> system installer via
+  `UpdateFileProvider` (authority `<applicationId>.updates`, `res/xml/update_file_paths.xml`, `REQUEST_INSTALL_PACKAGES`); all of that
+  Kotlin/XML is written by `tool/patch_android.py`. `_DownloadDialog` in update_prompt.dart: progress, "allow installing" step,
+  fallback to the browser. Release-asset URL must end in `.apk` (`UpdateInfo.isDirectApk`), otherwise the old browser path is used.
 
 ## Known limitations / ideas
 - Sizes were calibrated against screenshots, partly on one phone; `textScale` is an estimate.

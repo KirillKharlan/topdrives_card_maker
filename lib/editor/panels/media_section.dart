@@ -311,6 +311,16 @@ class MediaSection extends StatelessWidget {
                 forwardTooltip: 'Nudge down',
                 onForward: () => controller.nudgePhoto(dy: _nudgeStep),
               ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: (p.photoTransform.dx == 0 && p.photoTransform.dy == 0)
+                      ? null
+                      : controller.resetPhotoPosition,
+                  icon: const Icon(Icons.center_focus_strong),
+                  label: const Text('Reset position'),
+                ),
+              ),
               const SizedBox(height: 4),
               Text('Empty areas (photo does not reach the card edges):',
                   style: Theme.of(context).textTheme.bodySmall),

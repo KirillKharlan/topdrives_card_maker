@@ -249,6 +249,10 @@ class EditorController extends ChangeNotifier {
 
   void resetPhotoTransform() => update((p) => p.photoTransform = PhotoTransform.identity);
 
+  /// Puts the photo back at the centre of the card; zoom and rotation stay as they are.
+  void resetPhotoPosition() =>
+      update((p) => p.photoTransform = p.photoTransform.copyWith(dx: 0, dy: 0));
+
   /// Sets the photo position exactly (fractions of the card width / height).
   /// A value very close to the centre snaps to 0, so the centre is easy to hit.
   void setPhotoShift({double? dx, double? dy}) => update((p) {
