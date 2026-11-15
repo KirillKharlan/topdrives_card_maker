@@ -72,6 +72,10 @@ claude/claude.md                 this file
 - Drive: frames contain only "WD"; the app draws the first character (R / F / 4).
 
 ## Photo pipeline
+- Axis-exact moving: `PhotoMoveMode` (lib/editor/photo_move_mode.dart: free / auto / horizontal / vertical) lives in `EditorController.moveMode`
+  (not saved with the card). `gestureUpdate` passes the finger delta through `_allowedMovement`; `auto` collects movement until
+  `axisLockDistance` (12 screen px), then locks the dominant axis until `gestureStart` resets it. `setPhotoShift` (sliders, snaps |v|<0.01 to 0)
+  and `nudgePhoto` (step 0.001, rounded to 4 decimals) set dx/dy exactly. Axes are card axes, independent of photo rotation. Not compiled.
 - `PhotoTransform`: scale 0.4..6, dx/dy (fraction of card, +-1), rotation (radians). Original files are never
   modified; originals live in the photo library.
 - `paintPhoto()` (photo_painter.dart) is the single drawing routine used by the preview, the card export,
@@ -136,7 +140,47 @@ claude/claude.md                 this file
 - Templates: `assets/templates/<id>.json` + frames; list in `TemplateRegistry._ids`; `EditorController.template` is a getter
   (follows `project.templateId`). New frame folders must be declared in pubspec (assets are not recursive).
 - `modern` frames are generated: `python3 tool/make_modern_frames.py` (from the standard frames, in 2400x1494 pixels).
-  Measured from a Porsche 911 GT2 card: no stars/bottom strip, wrench 1.5x at (185,750), gradient stat panels,
-  pixel-fade colour block (no class letter), dark RQ number (`fields.rq.color`, y 699). Only class A was seen.
+  Measured from a Porsche 911 GT2 card: no stars/bottom strip, wrench 1.5x at (185,750), stat panels fading in from fully clear
+  (alpha 0 -> 0.72 over x 1066..1260; the template's blur fades over the same width via `blurRegions[].fadeLeft`),
+  colour block topped by a see-through chequered flag (35-unit squares, 3 columns, alpha fading upwards; class colour),
+  dark RQ number (`fields.rq.color`, y 699). Pitfalls fixed in the generator: the standard frame paints the ROUNDED CARD CORNERS as opaque black pixels (the app's ClipRRect does not do it), so the generator copies them back at the end; the standard class flag's edge reaches x~142 (clear x<150), and the standard bottom shading strip (alpha grows
+  downwards) must not count as a 'word' (words are found by BRIGHTNESS). Everything measured ON the reference card, not by eye: stat panels = neutral grey 50 with measured alpha curve (0 at x=1062, .78 at 1191, .90 at the
+  right edge; fitted from the clear photo in the gaps between panels), blur fadeLeft 130; title row parts (logo 58 opaque, bar 47 a=.55, year/country 53
+  a=.95); chequered flag = tilted by 0.19 (10.8 deg), squares 26.5 tall / 46.5 wide, alpha (u-562)/116, solid block from u=678.5; class A colour
+  (147,80,255). Stat panels re-spaced to the reference (gaps centred at 288/471/654, `NEW_PANELS`), baked words moved down per group
+  (`WORD_GROUPS`), tyres word dx -12 / dy +5, `blurRegions` y/h and `drivePrefix.baseline` 743 follow. Checked against a card of
+  the new design: static words within 1-2 units. Calibration trick: use the reference card as the photo (zoom 1, no shift) and
+  compare the dynamic fields by eye/measure. Title row recoloured neutral grey (logo 58, bar 84/84/86, year 55, country 48),
+  Modern has its own `titleStyles.fan` (brand 54.5, baseline 68.5, x 155) and tyres shifted -15 (frame sprite + `fields.tyre.x` 405). Only class A was seen. `drivePrefix` has an explicit baseline (738, measured on a phone: 742 put the letter 3 px low) so the
+  F/R/4 stands on the baseline of the baked "WD".
 - Flag: `CardProject.showFlag`, `CountryFlags` (painted, simplified), `FlagBadge` between frame and texts, polygon and
   opacity in template `flag`. Works in every template.
+
+## Performance notes
+- Every `BackdropFilter` is a GPU layer; keep the count low. A fading blur (`blurRegions[].fadeLeft`) is ONE full blur per region plus ONE shared sharp
+  photo copy under a `ShaderMask` gradient (see `CardView._frostedGlass`), never many narrow strips (12 strips x 4 panels = 52 layers made the Modern
+  template very slow, in the editor and in the home grid). While a live video plays the fade uses 3 strips (a second video decoder is not an option).
+- Home-grid thumbnails use `CardView(lite: true)`: no frosted glass (invisible at that size).
+- `TitleLayout.compute` caches its result (the card rebuilds on every frame of a drag; long names need dozens of text measurements).
+- While a finger moves the photo, `EditorController.update(..., form: false)` pings only `previewTick` (the card preview); the form under the card
+  is rebuilt once when the finger lifts (`gestureEnd`). Before, all 5 form sections were rebuilt on every frame of a drag.
+- `CardView` puts the frame, logo, flag and all texts into one `RepaintBoundary`: a drag repaints only the photo and the frosted glass.
+- Ideas not done yet: cache the blurred picture of `PhotoFill.blur` / `mirror` (they run `saveLayer` + blur on every paint); decode the photo at
+  ~1600 px while editing and at full size only for export; pipeline frame extraction in the video export (extract frame N+1 while N is captured);
+  store each project in its own file instead of rewriting the whole list.
+
+## Tag colour picker
+- `lib/ui/common/color_wheel.dart`: `ColorWheelPicker` (hue = angle, saturation = radius, brightness bar; own code, no package) and `colourPalette`
+  (42 ready colours). Used in `tag_editor_sheet.dart` next to the hex field; wheel, palette and hex stay in sync.
+## Ideas: AI photo extend (not built)
+- Pixelcut API outpaint: 10 credits (= $0.10) per image, 100 free credits at signup, plans from $10/month (1000 credits, no rollover), up to 2000 px
+  per side, best with small extensions and creativity 0.2-0.4. Docs say never embed the key in a mobile app (use a backend or each person's own key).
+
+## Photo quality and fill (v13)
+- The card used to be exported at 1338x828 (pixelRatio 1) although the frames are 2400 px wide. Export now has "Picture size": Standard 1338 px /
+  High 2400 px (default, pixelRatio 2400/1338). `EditorController.withSharpPhoto` decodes the photo at up to 4096 px wide during the capture
+  (preview stays at 2600) so a zoomed-in photo does not turn soft.
+- Fill (`lib/photo_fill`): work size 400 -> 480 px (long side); `_correctSeam` spreads the colour jump between the filled area and the photo into the fill
+  (fades over ~10 working px; texture untouched). NOT benchmarked against the old result: a Python PatchMatch stand-in was too weak to be a test
+  (13 dB even before correction), so only the logic is verified. To judge the fill properly we need ORIGINAL photos (not screenshots).
+- Known ceiling: PatchMatch re-arranges existing pixels, it cannot invent content; big extensions need a generative model (API) or an on-device model (LaMa).

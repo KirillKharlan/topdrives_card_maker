@@ -14,6 +14,8 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
   final hasExtras = c.project.prize || c.project.tags.isNotEmpty;
   final hasPhoto = c.photoFile != null;
   var includeExtras = true;
+  // The frames are drawn at 2400 px wide, so 2400 / 1338 shows them at their real size.
+  var exportScale = 2400 / 1338;
   var videoFps = 30;
   var gifFps = 20;
   var gifScale = 1.0;
@@ -123,8 +125,14 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
           }
         }
 
-        Future<Uint8List> cardPng() => c.withoutVideo(
-              () => CardExporter.capture((hasExtras && includeExtras) ? c.fullKey : c.cardKey),
+        Future<Uint8List> cardPng() => c.withSharpPhoto(
+              context,
+              () => c.withoutVideo(
+                () => CardExporter.capture(
+                  (hasExtras && includeExtras) ? c.fullKey : c.cardKey,
+                  pixelRatio: exportScale,
+                ),
+              ),
             );
 
         Future<Uint8List> photoPng() => CardExporter.croppedPhoto(
@@ -224,6 +232,26 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
                   ),
                   const Divider(height: 1),
                 ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    children: [
+                      const Text('Picture size'),
+                      ChoiceChip(
+                        label: const Text('Standard 1338 px'),
+                        selected: exportScale == 1.0,
+                        onSelected: (_) => setSheetState(() => exportScale = 1.0),
+                      ),
+                      ChoiceChip(
+                        label: const Text('High 2400 px'),
+                        selected: exportScale != 1.0,
+                        onSelected: (_) => setSheetState(() => exportScale = 2400 / 1338),
+                      ),
+                    ],
+                  ),
+                ),
                 if (hasExtras)
                   SwitchListTile(
                     title: const Text('Include tags and prize marker'),

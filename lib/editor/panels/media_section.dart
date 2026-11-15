@@ -14,6 +14,7 @@ import '../../ui/library/library_screen.dart';
 import '../../video/video_frames.dart';
 import '../canvas/logo_tile.dart';
 import '../editor_controller.dart';
+import '../photo_move_mode.dart';
 import 'section_card.dart';
 
 /// Car photo or video (library, gallery, remove, zoom, clip) and brand logo.
@@ -21,6 +22,39 @@ class MediaSection extends StatelessWidget {
   const MediaSection({super.key, required this.controller});
 
   final EditorController controller;
+
+  /// One press of an arrow button moves the photo by this fraction of the card.
+  static const double _nudgeStep = 0.001;
+
+  /// A position slider (the photo centre from the card centre, in card sizes) with
+  /// two arrow buttons for single steps. Near the middle the slider snaps to 0.
+  Widget _shiftRow({
+    required IconData icon,
+    required double value,
+    required ValueChanged<double> onChanged,
+    required IconData backIcon,
+    required String backTooltip,
+    required VoidCallback onBack,
+    required IconData forwardIcon,
+    required String forwardTooltip,
+    required VoidCallback onForward,
+  }) {
+    return Row(
+      children: [
+        Icon(icon),
+        Expanded(
+          child: Slider(
+            value: value.clamp(-PhotoTransform.maxShift, PhotoTransform.maxShift).toDouble(),
+            min: -PhotoTransform.maxShift,
+            max: PhotoTransform.maxShift,
+            onChanged: onChanged,
+          ),
+        ),
+        IconButton(tooltip: backTooltip, icon: Icon(backIcon), onPressed: onBack),
+        IconButton(tooltip: forwardTooltip, icon: Icon(forwardIcon), onPressed: onForward),
+      ],
+    );
+  }
 
   Future<void> _photoFromLibrary(BuildContext context) async {
     final item = await Navigator.push<MediaItem>(
@@ -241,6 +275,41 @@ class MediaSection extends StatelessWidget {
                     onPressed: () => controller.rotatePhotoBy(degreesToRadians(90)),
                   ),
                 ],
+              ),
+              const SizedBox(height: 4),
+              Text('Drag the photo:', style: Theme.of(context).textTheme.bodySmall),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final mode in PhotoMoveMode.values)
+                    ChoiceChip(
+                      label: Text(mode.label),
+                      selected: controller.moveMode == mode,
+                      onSelected: (_) => controller.setMoveMode(mode),
+                    ),
+                ],
+              ),
+              _shiftRow(
+                icon: Icons.swap_horiz,
+                value: p.photoTransform.dx,
+                onChanged: (v) => controller.setPhotoShift(dx: v),
+                backIcon: Icons.arrow_left,
+                backTooltip: 'Nudge left',
+                onBack: () => controller.nudgePhoto(dx: -_nudgeStep),
+                forwardIcon: Icons.arrow_right,
+                forwardTooltip: 'Nudge right',
+                onForward: () => controller.nudgePhoto(dx: _nudgeStep),
+              ),
+              _shiftRow(
+                icon: Icons.swap_vert,
+                value: p.photoTransform.dy,
+                onChanged: (v) => controller.setPhotoShift(dy: v),
+                backIcon: Icons.arrow_drop_up,
+                backTooltip: 'Nudge up',
+                onBack: () => controller.nudgePhoto(dy: -_nudgeStep),
+                forwardIcon: Icons.arrow_drop_down,
+                forwardTooltip: 'Nudge down',
+                onForward: () => controller.nudgePhoto(dy: _nudgeStep),
               ),
               const SizedBox(height: 4),
               Text('Empty areas (photo does not reach the card edges):',

@@ -32,7 +32,85 @@ class FillJob {
 Uint8List? runFillJob(FillJob job) {
   final low = _PatchMatchSolver(job.workWidth, job.workHeight, job.workRgba).solve();
   if (low == null) return null;
+  _correctSeam(low);
   return _composeFullResolution(job, low);
+}
+
+/// Makes the colour of the synthesised area meet the photo's colour at the seam.
+///
+/// Patches are copied from other parts of the photo, so right next to the
+/// photo the fill can be a little lighter, darker or tinted than what it has
+/// to continue, which shows as an edge. The jump between a filled pixel and the
+/// photo pixels around it is spread into the fill and fades out with the
+/// distance (it fades out over about 10 working pixels). Only the smooth colour
+/// changes; the texture, which comes from the matched patches, is left alone.
+void _correctSeam(_LowResult low) {
+  final w = low.width, h = low.height, n = w * h;
+  final hole = low.hole;
+  final corr = Float32List(3 * n);
+  final fixed = Uint8List(n); // 1 = the jump is known here (next to the photo)
+  const neighbours = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      final p = y * w + x;
+      if (hole[p] == 0) continue;
+      var count = 0;
+      var dr = 0.0, dg = 0.0, db = 0.0;
+      for (final (dx, dy) in neighbours) {
+        final nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        final q = ny * w + nx;
+        if (hole[q] != 0) continue;
+        dr += low.rgb[3 * q] - low.rgb[3 * p];
+        dg += low.rgb[3 * q + 1] - low.rgb[3 * p + 1];
+        db += low.rgb[3 * q + 2] - low.rgb[3 * p + 2];
+        count++;
+      }
+      if (count > 0) {
+        corr[3 * p] = dr / count;
+        corr[3 * p + 1] = dg / count;
+        corr[3 * p + 2] = db / count;
+        fixed[p] = 1;
+      }
+    }
+  }
+  // Spread it inwards: alternate sweeps in both directions, each pixel takes the
+  // average of its filled neighbours times a decay (0.9 = fades out over ~10 px).
+  const decay = 0.9;
+  for (var sweep = 0; sweep < 40; sweep++) {
+    final forward = sweep.isEven;
+    for (var j = 0; j < h; j++) {
+      final y = forward ? j : h - 1 - j;
+      for (var i = 0; i < w; i++) {
+        final x = forward ? i : w - 1 - i;
+        final p = y * w + x;
+        if (hole[p] == 0 || fixed[p] == 1) continue;
+        var count = 0;
+        var sr = 0.0, sg = 0.0, sb = 0.0;
+        for (final (dx, dy) in neighbours) {
+          final nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          final q = ny * w + nx;
+          if (hole[q] == 0) continue;
+          sr += corr[3 * q];
+          sg += corr[3 * q + 1];
+          sb += corr[3 * q + 2];
+          count++;
+        }
+        if (count == 0) continue;
+        corr[3 * p] = decay * sr / count;
+        corr[3 * p + 1] = decay * sg / count;
+        corr[3 * p + 2] = decay * sb / count;
+      }
+    }
+  }
+  for (var p = 0; p < n; p++) {
+    if (hole[p] == 0) continue;
+    for (var c = 0; c < 3; c++) {
+      final v = low.rgb[3 * p + c] + corr[3 * p + c];
+      low.rgb[3 * p + c] = v < 0 ? 0.0 : (v > 255 ? 255.0 : v);
+    }
+  }
 }
 
 class _Level {
@@ -48,10 +126,13 @@ class _Level {
 }
 
 class _LowResult {
-  _LowResult(this.width, this.height, this.rgb, this.nnf);
+  _LowResult(this.width, this.height, this.rgb, this.nnf, this.hole);
 
   final int width, height;
   final Float32List rgb;
+
+  /// 1 = this pixel was empty (and is synthesised), 0 = it is the photo.
+  final Uint8List hole;
 
   /// For every pixel the position of the source patch centre (or -1).
   final Int32List nnf;
@@ -256,7 +337,7 @@ class _PatchMatchSolver {
       prevNnf = nnf;
     }
     final finest = _levels.first;
-    return _LowResult(finest.w, finest.h, prevCur!, prevNnf!);
+    return _LowResult(finest.w, finest.h, prevCur!, prevNnf!, finest.hole);
   }
 
   /// valid  = centres whose whole patch lies on the photo (usable as sources);

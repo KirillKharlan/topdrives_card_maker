@@ -20,6 +20,8 @@ class CardComposition extends StatelessWidget {
     this.logoFile,
     this.fillFile,
     this.videoLayer,
+    this.liveVideo = false,
+    this.photoMaxWidth = 2600,
     this.cardKey,
     this.fullKey,
   });
@@ -30,6 +32,10 @@ class CardComposition extends StatelessWidget {
   final File? logoFile;
   final File? fillFile;
   final Widget? videoLayer;
+  final bool liveVideo;
+
+  /// Width the photo is decoded at (a higher value only while a sharp export is made).
+  final int photoMaxWidth;
   final GlobalKey? cardKey;
   final GlobalKey? fullKey;
 
@@ -56,6 +62,8 @@ class CardComposition extends StatelessWidget {
                   logoFile: logoFile,
                   fillFile: fillFile,
                   videoLayer: videoLayer,
+                  photoMaxWidth: photoMaxWidth,
+                  liveVideo: liveVideo,
                 ),
               ),
               if (project.prize) PrizeStrip(project: project, template: template),

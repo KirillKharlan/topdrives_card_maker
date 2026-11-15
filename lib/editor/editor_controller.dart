@@ -12,9 +12,16 @@ import '../data/repositories/app_store.dart';
 import '../photo_fill/fill_service.dart';
 import '../templates/template_spec.dart';
 import '../video/video_frames.dart';
+import 'photo_move_mode.dart';
 
 /// State of the card being edited. All changes go through [update], which
 /// repaints the preview and schedules an autosave.
+/// Tells only the card preview that something changed (used while a finger moves
+/// the photo: rebuilding the whole form under the card on every frame is wasted work).
+class PreviewTick extends ChangeNotifier {
+  void ping() => notifyListeners();
+}
+
 class EditorController extends ChangeNotifier {
   EditorController({required this.store, required this.project});
 
@@ -31,12 +38,48 @@ class EditorController extends ChangeNotifier {
   double _gestureStartScale = 1;
   double _gestureStartRotation = 0;
 
+  /// How a drag moves the photo (not saved with the card: a working tool).
+  PhotoMoveMode moveMode = PhotoMoveMode.free;
+
+  /// Finger travel (screen pixels) after which [PhotoMoveMode.auto] picks an axis.
+  static const double axisLockDistance = 12;
+
+  /// Movement collected before the axis was chosen, and the chosen axis.
+  Offset _dragTotal = Offset.zero;
+  Axis? _lockedAxis;
+
+  void setMoveMode(PhotoMoveMode mode) {
+    moveMode = mode;
+    notifyListeners();
+  }
+
   /// The photo, or for a video card the still frame of the video.
   File? get photoFile => exportFrame ?? store.photoFileFor(project);
   File? get videoFile => store.videos.fileOf(project.videoId);
 
   /// True while the card is captured as a picture: the live video is left out.
   bool videoHidden = false;
+
+  /// Width the photo is decoded at. 2600 is plenty for the screen; a sharp export of a
+  /// zoomed-in photo temporarily asks for more (see [withSharpPhoto]).
+  int photoDecodeWidth = 2600;
+
+  /// Runs [action] (a capture of the card) with the photo decoded at up to 4096 px
+  /// wide, so a photo that is zoomed in on the card does not turn soft in the export.
+  Future<T> withSharpPhoto<T>(BuildContext context, Future<T> Function() action) async {
+    final file = photoFile;
+    if (file == null) return action();
+    photoDecodeWidth = 4096;
+    notifyListeners();
+    try {
+      if (context.mounted) await precacheImage(ResizeImage(FileImage(file), width: 4096), context);
+      await WidgetsBinding.instance.endOfFrame;
+      return await action();
+    } finally {
+      photoDecodeWidth = 2600;
+      notifyListeners();
+    }
+  }
 
   /// While a video is exported: the frame of the video shown in place of the photo.
   File? exportFrame;
@@ -56,10 +99,17 @@ class EditorController extends ChangeNotifier {
 
   bool get fillIsCurrent => smartFillFile != null;
 
-  void update(void Function(CardProject p) change) {
+  /// Notifies everything that listens (the form too), or with [form] false only the card preview.
+  final PreviewTick previewTick = PreviewTick();
+
+  void update(void Function(CardProject p) change, {bool form = true}) {
     change(project);
     project.updatedAt = DateTime.now();
-    notifyListeners();
+    if (form) {
+      notifyListeners();
+    } else {
+      previewTick.ping();
+    }
     _saveTimer?.cancel();
     _saveTimer = Timer(
       const Duration(milliseconds: 600),
@@ -199,6 +249,23 @@ class EditorController extends ChangeNotifier {
 
   void resetPhotoTransform() => update((p) => p.photoTransform = PhotoTransform.identity);
 
+  /// Sets the photo position exactly (fractions of the card width / height).
+  /// A value very close to the centre snaps to 0, so the centre is easy to hit.
+  void setPhotoShift({double? dx, double? dy}) => update((p) {
+        double snap(double v) => v.abs() < 0.01 ? 0.0 : v;
+        p.photoTransform = p.photoTransform
+            .copyWith(dx: dx == null ? null : snap(dx), dy: dy == null ? null : snap(dy))
+            .clamped();
+      });
+
+  /// Moves the photo by a small step along one axis (the arrow buttons).
+  void nudgePhoto({double dx = 0, double dy = 0}) => update((p) {
+        double round4(double v) => (v * 10000).round() / 10000;
+        final t = p.photoTransform;
+        p.photoTransform =
+            t.copyWith(dx: round4(t.dx + dx), dy: round4(t.dy + dy)).clamped();
+      });
+
   /// Builds the content-aware fill for the current framing (takes a few seconds).
   /// Returns a message for the user.
   Future<String> generateSmartFill() async {
@@ -235,22 +302,49 @@ class EditorController extends ChangeNotifier {
   void gestureStart() {
     _gestureStartScale = project.photoTransform.scale;
     _gestureStartRotation = project.photoTransform.rotation;
+    _dragTotal = Offset.zero;
+    _lockedAxis = null;
+  }
+
+  /// The part of the finger movement [delta] that is allowed by [moveMode].
+  Offset _allowedMovement(Offset delta) {
+    switch (moveMode) {
+      case PhotoMoveMode.free:
+        return delta;
+      case PhotoMoveMode.horizontal:
+        return Offset(delta.dx, 0);
+      case PhotoMoveMode.vertical:
+        return Offset(0, delta.dy);
+      case PhotoMoveMode.auto:
+        if (_lockedAxis == null) {
+          _dragTotal += delta;
+          if (_dragTotal.distance < axisLockDistance) return Offset.zero;
+          _lockedAxis =
+              _dragTotal.dx.abs() >= _dragTotal.dy.abs() ? Axis.horizontal : Axis.vertical;
+          delta = _dragTotal; // catch up with what was held back
+        }
+        return _lockedAxis == Axis.horizontal ? Offset(delta.dx, 0) : Offset(0, delta.dy);
+    }
   }
 
   /// [scaleFactor] and [rotation] are relative to the start of the gesture,
   /// [delta] is the finger movement since the last update (screen pixels).
   void gestureUpdate(double scaleFactor, double rotation, Offset delta, double displayScale) {
     if (!project.hasMedia) return;
+    final move = _allowedMovement(delta);
     update((p) {
       final t = p.photoTransform;
       p.photoTransform = PhotoTransform(
         scale: _gestureStartScale * scaleFactor,
-        dx: t.dx + delta.dx / displayScale / template.width,
-        dy: t.dy + delta.dy / displayScale / template.height,
+        dx: t.dx + move.dx / displayScale / template.width,
+        dy: t.dy + move.dy / displayScale / template.height,
         rotation: _gestureStartRotation + rotation,
       ).clamped();
-    });
+    }, form: false);
   }
+
+  /// The finger is lifted: now the sliders of the form catch up with the framing.
+  void gestureEnd() => notifyListeners();
 
   Future<void> flush() async {
     _saveTimer?.cancel();
@@ -260,6 +354,7 @@ class EditorController extends ChangeNotifier {
   @override
   void dispose() {
     _saveTimer?.cancel();
+    previewTick.dispose();
     super.dispose();
   }
 }

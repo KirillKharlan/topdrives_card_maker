@@ -18,6 +18,7 @@ class PreviewPane extends StatelessWidget {
       return GestureDetector(
         onScaleStart: (_) => c.gestureStart(),
         onScaleUpdate: (d) => c.gestureUpdate(d.scale, d.rotation, d.focalPointDelta, displayScale),
+        onScaleEnd: (_) => c.gestureEnd(),
         child: FittedBox(
           fit: BoxFit.fitWidth,
           child: CardComposition(
@@ -26,6 +27,7 @@ class PreviewPane extends StatelessWidget {
             photoFile: c.photoFile,
             logoFile: c.logoFile,
             fillFile: c.smartFillFile,
+            photoMaxWidth: c.photoDecodeWidth,
             videoLayer: c.videoFile == null
                 ? null
                 : VideoLayer(
@@ -36,6 +38,7 @@ class PreviewPane extends StatelessWidget {
                     lengthMs: c.project.videoLengthMs,
                     hidden: c.videoHidden,
                   ),
+            liveVideo: c.videoFile != null && !c.videoHidden,
             cardKey: c.cardKey,
             fullKey: c.fullKey,
           ),

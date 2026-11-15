@@ -27,7 +27,8 @@ class FillService {
 
   /// The search runs on a card-shaped canvas this many pixels along its long
   /// side; the texture is then brought back at the card's own resolution.
-  static const workLongSide = 400;
+  /// Size of the small copy the search runs on. Larger = better structure, slower (cost grows with the area).
+  static const workLongSide = 480;
 
   static Future<FillOutcome> generate({
     required File photo,

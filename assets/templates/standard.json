@@ -68,7 +68,7 @@
   },
   "flag": {
     "points": [[1209.5, 0], [1338, 0], [1338, 97.5], [1189, 97.5]],
-    "opacity": 0.78
+    "opacity": 0.62
   },
 
   "prizeStyles": {
@@ -133,8 +133,9 @@
       "y": 656,
       "w": 134,
       "h": 110,
-      "size": 101,
-      "align": "right"
+      "size": 99,
+      "align": "right",
+      "baseline": 738
     },
     "tyre": {
       "x": 420,

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/card_tag.dart';
+import '../../ui/common/color_wheel.dart';
 import '../canvas/custom_tag_view.dart';
 
-/// Tag constructor: type a title and pick the border colour; the fill is the
-/// same colour, darkened, and the tag width follows the text. Returns the new
+/// Tag constructor: type a title and pick the border colour (colour wheel, ready
+/// palette or hex); the fill is the same colour, darkened, and the tag width follows the text. Returns the new
 /// (or edited) tag, or null if cancelled.
 Future<CardTag?> showTagEditor(BuildContext context, {CardTag? initial}) {
   return showModalBottomSheet<CardTag>(
@@ -43,6 +44,7 @@ class _TagEditorState extends State<_TagEditor> {
       TextEditingController(text: widget.initial?.text ?? '');
   late int _color = widget.initial?.colorValue ?? _presets.first;
   late final TextEditingController _hex = TextEditingController(text: _hexOf(_color));
+  late HSVColor _hsv = HSVColor.fromColor(Color(_color));
 
   static String _hexOf(int argb) =>
       (argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase();
@@ -57,6 +59,15 @@ class _TagEditorState extends State<_TagEditor> {
   void _setColor(int argb) {
     setState(() {
       _color = argb | 0xFF000000;
+      _hsv = HSVColor.fromColor(Color(_color));
+      _hex.text = _hexOf(_color);
+    });
+  }
+
+  void _onWheel(HSVColor value) {
+    setState(() {
+      _hsv = value;
+      _color = value.toColor().value | 0xFF000000;
       _hex.text = _hexOf(_color);
     });
   }
@@ -64,7 +75,12 @@ class _TagEditorState extends State<_TagEditor> {
   void _onHex(String value) {
     if (value.length != 6) return;
     final parsed = int.tryParse(value, radix: 16);
-    if (parsed != null) setState(() => _color = 0xFF000000 | parsed);
+    if (parsed != null) {
+      setState(() {
+        _color = 0xFF000000 | parsed;
+        _hsv = HSVColor.fromColor(Color(_color));
+      });
+    }
   }
 
   @override
@@ -112,27 +128,37 @@ class _TagEditorState extends State<_TagEditor> {
               const SizedBox(height: 4),
               Text('Border colour', style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final preset in _presets)
-                    GestureDetector(
-                      onTap: () => _setColor(preset),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Color(preset),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: preset == _color ? Colors.white : Colors.transparent,
-                            width: 3,
+              Center(child: ColorWheelPicker(hsv: _hsv, onChanged: _onWheel)),
+              const SizedBox(height: 14),
+              Text('Ready colours', style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 8),
+              LayoutBuilder(
+                builder: (context, box) {
+                  const gap = 5.0;
+                  final size = (box.maxWidth - gap * 11) / 12;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: [
+                      for (final colour in colourPalette)
+                        GestureDetector(
+                          onTap: () => _setColor(colour),
+                          child: Container(
+                            width: size,
+                            height: size,
+                            decoration: BoxDecoration(
+                              color: Color(colour),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: colour == _color ? Colors.white : Colors.transparent,
+                                width: 2.5,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 12),
               TextField(
