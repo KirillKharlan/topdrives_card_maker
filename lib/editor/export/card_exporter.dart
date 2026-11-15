@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -23,6 +24,56 @@ class CardExporter {
     final image = await boundary.toImage(pixelRatio: pixelRatio);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     return data!.buffer.asUint8List();
+  }
+
+  /// Like [capture], but guards against the random GPU glitch that sometimes leaves a
+  /// block of garbage pixels (black rectangle, pieces of the photo) in the top-left
+  /// corner of the picture. The glitch differs from one capture to the next, so the
+  /// card is captured until two captures in a row are byte-for-byte identical.
+  /// A corrupted capture can never match another one, so it is never saved.
+  static Future<Uint8List> captureVerified(
+    GlobalKey key, {
+    double pixelRatio = 1.0,
+    int maxAttempts = 6,
+  }) async {
+    Uint8List? previous;
+    var previousWidth = 0, previousHeight = 0;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      final shot = await captureRgba(key, pixelRatio: pixelRatio);
+      if (previous != null &&
+          shot.width == previousWidth &&
+          shot.height == previousHeight &&
+          _sameBytes(previous, shot.rgba)) {
+        return _encodePng(shot.rgba, shot.width, shot.height);
+      }
+      previous = shot.rgba;
+      previousWidth = shot.width;
+      previousHeight = shot.height;
+      // Let the GPU finish and settle before the next try.
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      await WidgetsBinding.instance.endOfFrame;
+    }
+    throw StateError('the picture kept coming out corrupted, please try again');
+  }
+
+  static bool _sameBytes(Uint8List a, Uint8List b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  static Future<Uint8List> _encodePng(Uint8List rgba, int width, int height) async {
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(rgba, width, height, ui.PixelFormat.rgba8888, completer.complete);
+    final image = await completer.future;
+    try {
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      return data!.buffer.asUint8List();
+    } finally {
+      image.dispose();
+    }
   }
 
   /// The card as raw pixels (RGBA), for the video encoder.

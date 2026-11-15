@@ -128,7 +128,7 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
         Future<Uint8List> cardPng() => c.withSharpPhoto(
               context,
               () => c.withoutVideo(
-                () => CardExporter.capture(
+                () => CardExporter.captureVerified(
                   (hasExtras && includeExtras) ? c.fullKey : c.cardKey,
                   pixelRatio: exportScale,
                 ),
