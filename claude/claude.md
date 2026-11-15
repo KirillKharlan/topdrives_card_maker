@@ -103,6 +103,8 @@ claude/claude.md                 this file
 ## Build, release, updates
 - `flutter create` runs in CI (android/ and ios/ are git-ignored); `tool/patch_android.py` adds INTERNET,
   legacy storage permission and the app label.
+  It also switches Android lint off for release builds (`lint { checkReleaseBuilds = false }`): lintVitalAnalyzeRelease crashed
+  inside lint (NoSuchMethodError in JavaDocParser, StopShip check) and failed the whole APK build. Not compiled here; confirm in CI.
 - Workflow triggers: push to main/master (version `major.minor` from pubspec + run number), tags `vX.Y.Z`,
   manual run. `versionCode = X*1_000_000 + Y*1_000 + Z` (must only grow).
 - APK is re-signed with `apksigner` using repository secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`,

@@ -4,6 +4,10 @@
   have this permission by default).
 - WRITE_EXTERNAL_STORAGE (API <= 29): saving PNGs to the gallery on old Android.
 - Human-readable app name.
+- Lint: the release build runs Android lint ("lintVitalAnalyzeRelease"); its StopShip
+  check crashes inside lint (NoSuchMethodError in JavaDocParser) with some AGP / lint
+  versions and fails the whole build. Lint results are not needed for the APK, so lint
+  is switched off for release builds.
 - MainActivity + Mp4Encoder: a small channel "card_maker/video" that saves one frame
   of a video as a JPEG (MediaMetadataRetriever) and writes an H.264 MP4 from RGBA
   frames (MediaCodec + MediaMuxer); no extra plugin or ffmpeg needed.
@@ -282,3 +286,34 @@ activity.write_text(KOTLIN.replace("__PACKAGE__", package), encoding="utf-8")
     KOTLIN_ENCODER.replace("__PACKAGE__", package), encoding="utf-8"
 )
 print("MainActivity.kt and Mp4Encoder.kt written (" + package + ")")
+
+# ---- lint: do not let a crash inside Android lint fail the release build ----
+LINT_KTS = """
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+"""
+LINT_GROOVY = """
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+"""
+gradle_files = glob.glob("android/app/build.gradle.kts") + glob.glob("android/app/build.gradle")
+if not gradle_files:
+    raise SystemExit("android/app/build.gradle(.kts) not found: lint cannot be switched off")
+gradle = pathlib.Path(gradle_files[0])
+source = gradle.read_text(encoding="utf-8")
+if "checkReleaseBuilds" not in source:
+    patched, count = re.subn(
+        r"^android\s*\{[ \t]*\r?\n",
+        lambda m: m.group(0) + (LINT_KTS if gradle.suffix == ".kts" else LINT_GROOVY).lstrip("\n"),
+        source,
+        count=1,
+        flags=re.M,
+    )
+    if count != 1:
+        raise SystemExit(gradle.name + ": no `android {` block found, lint not switched off")
+    gradle.write_text(patched, encoding="utf-8")
+print(gradle.name + ": lint for release builds switched off")
