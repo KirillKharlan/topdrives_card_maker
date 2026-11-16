@@ -7,14 +7,20 @@ import '../../core/layout_tweaks.dart';
 import '../models/card_tag.dart';
 import '../storage/json_file_store.dart';
 
-/// User-level settings. For now: custom country codes.
+/// User-level settings: custom country codes, drives, tyres and tags, tyre-name tuning.
 class SettingsRepository extends ChangeNotifier {
   late final File _file;
   final List<String> _customCountries = [];
+  final List<String> _customDrives = [];
+  final List<String> _customTyres = [];
   final List<CardTag> _customTags = [];
   double _tyreNameOffset = 0;
 
   List<String> get customCountries => List.unmodifiable(_customCountries);
+
+  /// Drives and tyre types the user added next to the built-in ones.
+  List<String> get customDrives => List.unmodifiable(_customDrives);
+  List<String> get customTyres => List.unmodifiable(_customTyres);
 
   /// Tags the user built; offered in the tag picker next to the ready-made ones.
   List<CardTag> get customTags => List.unmodifiable(_customTags);
@@ -25,6 +31,10 @@ class SettingsRepository extends ChangeNotifier {
     if (data is Map<String, dynamic>) {
       final list = data['customCountries'];
       if (list is List) _customCountries.addAll(list.whereType<String>());
+      final drives = data['customDrives'];
+      if (drives is List) _customDrives.addAll(drives.whereType<String>());
+      final tyres = data['customTyres'];
+      if (tyres is List) _customTyres.addAll(tyres.whereType<String>());
       final offset = data['tyreNameOffset'];
       if (offset is num) {
         _tyreNameOffset = offset.toDouble();
@@ -53,6 +63,44 @@ class SettingsRepository extends ChangeNotifier {
 
   Future<void> removeCountry(String code) async {
     _customCountries.remove(code);
+    await _save();
+    notifyListeners();
+  }
+
+  /// Adds a custom drive (any short text; the card draws its first letter before "WD").
+  /// Returns the stored value, or null when it is empty.
+  Future<String?> addDrive(String raw) async {
+    final value = raw.trim().toUpperCase();
+    if (value.isEmpty) return null;
+    if (!AppConstants.drives.contains(value) && !_customDrives.contains(value)) {
+      _customDrives.add(value);
+      await _save();
+      notifyListeners();
+    }
+    return value;
+  }
+
+  Future<void> removeDrive(String value) async {
+    _customDrives.remove(value);
+    await _save();
+    notifyListeners();
+  }
+
+  /// Adds a custom tyre type. Returns the stored value, or null when it is empty.
+  Future<String?> addTyre(String raw) async {
+    final value = raw.trim();
+    if (value.isEmpty) return null;
+    final known = [...AppConstants.tyres, ..._customTyres].any((t) => t.toLowerCase() == value.toLowerCase());
+    if (!known) {
+      _customTyres.add(value);
+      await _save();
+      notifyListeners();
+    }
+    return value;
+  }
+
+  Future<void> removeTyre(String value) async {
+    _customTyres.remove(value);
     await _save();
     notifyListeners();
   }
@@ -91,6 +139,8 @@ class SettingsRepository extends ChangeNotifier {
 
   Future<void> _save() => writeJsonFile(_file, {
         'customCountries': _customCountries,
+        'customDrives': _customDrives,
+        'customTyres': _customTyres,
         'customTags': _customTags.map((t) => t.toJson()).toList(),
         'tyreNameOffset': _tyreNameOffset,
       });

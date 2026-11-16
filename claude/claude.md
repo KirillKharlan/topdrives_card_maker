@@ -71,6 +71,13 @@ claude/claude.md                 this file
   (`LayoutTweaks.tyreNameOffset`) nudges it by eye.
 - Drive: frames contain only "WD"; the app draws the first character (R / F / 4).
 
+## Custom drive / tyres / km/h
+- `SettingsRepository.customDrives/customTyres` (+ addDrive/addTyre/removeDrive/removeTyre, saved in settings.json). The Drive and Tyres
+  cards in `options_section.dart` use `_customChips` (built-in chips, user's chips with long-press remove, a Custom ActionChip).
+  The card draws only `drive[0]` before the frame's "WD"; tyre name is upper-cased before the frame's "Tyres".
+- Top speed field = `_TopSpeedField` in text_section.dart: the unit label inside the field toggles mph / km/h; in km/h mode the typed number is
+  converted (x 0.621371, rounded) into `project.topSpeed`, which always stays mph (so the N/A acceleration rule still works). Not compiled.
+
 ## Photo pipeline
 - Axis-exact moving: `PhotoMoveMode` (lib/editor/photo_move_mode.dart: free / auto / horizontal / vertical) lives in `EditorController.moveMode`
   (not saved with the card). `gestureUpdate` passes the finger delta through `_allowedMovement`; `auto` collects movement until

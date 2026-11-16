@@ -80,7 +80,14 @@ class VideoExporter {
         await precacheImage(ResizeImage(FileImage(frame), width: 2600), context);
         c.setExportFrame(frame);
         await WidgetsBinding.instance.endOfFrame;
-        final shot = await CardExporter.captureRgba(key, pixelRatio: scale);
+        // Every frame is captured until two captures agree: the random GPU glitch (garbage block,
+        // broken frame) never repeats exactly, so a frame that matches another capture is good.
+        final shot = await CardExporter.captureVerifiedRgba(
+          key,
+          pixelRatio: scale,
+          maxAttempts: 14,
+          settle: const Duration(milliseconds: 30),
+        );
         await onShot(i, shot);
         await frame.delete();
         progress.value = progressShare * (i + 1) / frames;

@@ -28,29 +28,40 @@ class CardExporter {
 
   /// Like [capture], but guards against the random GPU glitch that sometimes leaves a
   /// block of garbage pixels (black rectangle, pieces of the photo) in the top-left
-  /// corner of the picture. The glitch differs from one capture to the next, so the
-  /// card is captured until two captures in a row are byte-for-byte identical.
-  /// A corrupted capture can never match another one, so it is never saved.
+  /// corner of the picture, or ruins the whole picture. See [captureVerifiedRgba].
   static Future<Uint8List> captureVerified(
     GlobalKey key, {
     double pixelRatio = 1.0,
-    int maxAttempts = 6,
+    int maxAttempts = 12,
   }) async {
-    Uint8List? previous;
-    var previousWidth = 0, previousHeight = 0;
+    final shot = await captureVerifiedRgba(key, pixelRatio: pixelRatio, maxAttempts: maxAttempts);
+    return _encodePng(shot.rgba, shot.width, shot.height);
+  }
+
+  /// The card as raw pixels, captured until two captures are byte-for-byte identical.
+  /// The glitch differs from one capture to the next, so a corrupted capture never equals
+  /// another one: two identical captures are both good. (Two captures in a row are not
+  /// required: with a glitch in about every other capture that would rarely succeed.)
+  /// Used for every frame of a video export and for saved pictures.
+  static Future<({Uint8List rgba, int width, int height})> captureVerifiedRgba(
+    GlobalKey key, {
+    double pixelRatio = 1.0,
+    int maxAttempts = 12,
+    Duration settle = const Duration(milliseconds: 80),
+  }) async {
+    final shots = <({Uint8List rgba, int width, int height})>[];
     for (var attempt = 0; attempt < maxAttempts; attempt++) {
       final shot = await captureRgba(key, pixelRatio: pixelRatio);
-      if (previous != null &&
-          shot.width == previousWidth &&
-          shot.height == previousHeight &&
-          _sameBytes(previous, shot.rgba)) {
-        return _encodePng(shot.rgba, shot.width, shot.height);
+      for (final earlier in shots) {
+        if (earlier.width == shot.width &&
+            earlier.height == shot.height &&
+            _sameBytes(earlier.rgba, shot.rgba)) {
+          return shot;
+        }
       }
-      previous = shot.rgba;
-      previousWidth = shot.width;
-      previousHeight = shot.height;
+      shots.add(shot);
       // Let the GPU finish and settle before the next try.
-      await Future<void>.delayed(const Duration(milliseconds: 80));
+      await Future<void>.delayed(settle);
       await WidgetsBinding.instance.endOfFrame;
     }
     throw StateError('the picture kept coming out corrupted, please try again');

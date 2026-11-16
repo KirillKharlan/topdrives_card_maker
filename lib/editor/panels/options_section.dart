@@ -56,6 +56,119 @@ class OptionsSection extends StatelessWidget {
     if (normalized.isNotEmpty) controller.update((p) => p.country = normalized);
   }
 
+  /// Asks for a short text; returns it, or null when cancelled.
+  Future<String?> _askText(
+    BuildContext context, {
+    required String title,
+    required String hint,
+    required int maxLength,
+    String? helper,
+    TextCapitalization capitalization = TextCapitalization.none,
+  }) async {
+    final input = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: input,
+          autofocus: true,
+          maxLength: maxLength,
+          textCapitalization: capitalization,
+          decoration: InputDecoration(hintText: hint, helperText: helper, helperMaxLines: 3),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, input.text), child: const Text('Add')),
+        ],
+      ),
+    );
+    input.dispose();
+    return text;
+  }
+
+  Future<void> _addDrive(BuildContext context) async {
+    final text = await _askText(
+      context,
+      title: 'Custom drive',
+      hint: 'e.g. AWD',
+      maxLength: 4,
+      helper: 'The card shows only the first letter, the frame already has \"WD\" after it.',
+      capitalization: TextCapitalization.characters,
+    );
+    if (text == null) return;
+    final value = await controller.store.settings.addDrive(text);
+    if (value != null) controller.update((p) => p.drive = value);
+  }
+
+  Future<void> _addTyre(BuildContext context) async {
+    final text = await _askText(
+      context,
+      title: 'Custom tyres',
+      hint: 'e.g. Rally',
+      maxLength: 14,
+      helper: 'Shown in capitals before the word \"Tyres\" of the frame.',
+      capitalization: TextCapitalization.words,
+    );
+    if (text == null) return;
+    final value = await controller.store.settings.addTyre(text);
+    if (value != null) controller.update((p) => p.tyre = value);
+  }
+
+  Future<void> _removeCustom(
+    BuildContext context,
+    String value,
+    Future<void> Function(String) remove,
+  ) async {
+    final ok = await confirmDialog(
+      context,
+      title: 'Remove \"$value\"?',
+      message: 'It will be removed from the list. Cards that use it keep their text.',
+      action: 'Remove',
+    );
+    if (ok) await remove(value);
+  }
+
+  /// Built-in values, the user's own ones (long-press to remove) and a Custom button.
+  Widget _customChips(
+    BuildContext context, {
+    required List<String> builtIn,
+    required List<String> custom,
+    required String selected,
+    required void Function(String) onSelect,
+    required VoidCallback onAdd,
+    required Future<void> Function(String) onRemove,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final v in builtIn)
+              ChoiceChip(label: Text(v), selected: v == selected, onSelected: (_) => onSelect(v)),
+            for (final v in custom)
+              GestureDetector(
+                onLongPress: () => _removeCustom(context, v, onRemove),
+                child: ChoiceChip(label: Text(v), selected: v == selected, onSelected: (_) => onSelect(v)),
+              ),
+            ActionChip(
+              avatar: const Icon(Icons.add, size: 18),
+              label: const Text('Custom'),
+              onPressed: onAdd,
+            ),
+          ],
+        ),
+        if (custom.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text('Long-press a custom value to remove it.', style: Theme.of(context).textTheme.bodySmall),
+          ),
+      ],
+    );
+  }
+
   Future<void> _removeCountry(BuildContext context, String code) async {
     final ok = await confirmDialog(
       context,
@@ -118,11 +231,37 @@ class OptionsSection extends StatelessWidget {
         ),
         SectionCard(
           title: 'Drive',
-          children: [_chips(AppConstants.drives, p.drive, (v) => c.update((x) => x.drive = v))],
+          children: [
+            ListenableBuilder(
+              listenable: c.store.settings,
+              builder: (context, _) => _customChips(
+                context,
+                builtIn: AppConstants.drives,
+                custom: c.store.settings.customDrives,
+                selected: p.drive,
+                onSelect: (v) => c.update((x) => x.drive = v),
+                onAdd: () => _addDrive(context),
+                onRemove: c.store.settings.removeDrive,
+              ),
+            ),
+          ],
         ),
         SectionCard(
           title: 'Tyres',
-          children: [_chips(AppConstants.tyres, p.tyre, (v) => c.update((x) => x.tyre = v))],
+          children: [
+            ListenableBuilder(
+              listenable: c.store.settings,
+              builder: (context, _) => _customChips(
+                context,
+                builtIn: AppConstants.tyres,
+                custom: c.store.settings.customTyres,
+                selected: p.tyre,
+                onSelect: (v) => c.update((x) => x.tyre = v),
+                onAdd: () => _addTyre(context),
+                onRemove: c.store.settings.removeTyre,
+              ),
+            ),
+          ],
         ),
         SectionCard(
           title: 'Country',
