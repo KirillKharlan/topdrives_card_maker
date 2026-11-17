@@ -9,7 +9,7 @@ class CardProject {
   CardProject({
     required this.id,
     this.name = 'New card',
-    this.templateId = 'standard',
+    this.templateId = '', // empty: nothing chosen yet, the card is drawn with the standard template
     this.photoId,
     this.photoTransform = PhotoTransform.identity,
     this.photoFill = PhotoFill.smart,
@@ -30,16 +30,16 @@ class CardProject {
     this.showFlag = false,
     this.yearScale = 1.0,
     this.tagScale = 1.0,
-    this.brand = 'Brand',
-    this.model = 'Model',
+    this.brand = '', // the fields of the editor show "Brand" / "Model" as a hint while empty
+    this.model = '',
     this.year = '',
-    this.country = 'DE',
+    this.country = '',
     this.topSpeed = '',
     this.accel = '',
     this.handling = '',
-    this.drive = 'RWD',
-    this.tyre = 'Standard',
-    this.carClass = 'B',
+    this.drive = '',
+    this.tyre = '',
+    this.carClass = '', // empty: nothing chosen yet, the card is drawn with the B frame
     this.rq = '',
     this.prize = false,
     this.prizeText = defaultPrizeText,

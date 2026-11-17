@@ -49,7 +49,7 @@ class AppStore {
   }
 
   TemplateSpec templateFor(CardProject project) =>
-      templates[project.templateId] ?? templates.values.first;
+      templates[project.templateId] ?? templates['standard'] ?? templates.values.first;
 
   /// The generated content-aware fill for [project], if it exists and still
   /// matches the current framing.

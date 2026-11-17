@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../editor_controller.dart';
 import 'section_card.dart';
 
-/// Top speed field. The card shows miles per hour; tap the unit inside the field to
-/// switch it to km/h: the number is then typed in km/h and the card gets it converted.
+/// Top speed field (miles per hour on the card) with a button under it: if the number
+/// typed in is in km/h, the button turns it into mph right in the field. Right after a
+/// conversion the same button undoes it, so a second tap does not convert twice.
 class _TopSpeedField extends StatefulWidget {
   const _TopSpeedField({required this.value, required this.onChanged});
 
-  /// The card's top speed (always mph).
+  /// The card's top speed (mph).
   final String value;
   final ValueChanged<String> onChanged;
 
@@ -20,7 +21,9 @@ class _TopSpeedFieldState extends State<_TopSpeedField> {
   static const _mphPerKmh = 0.621371;
 
   late final TextEditingController _text = TextEditingController(text: widget.value);
-  bool _kmh = false;
+
+  /// The km/h text that was in the field before the last conversion (null: not converted).
+  String? _undoTo;
 
   @override
   void dispose() {
@@ -30,53 +33,58 @@ class _TopSpeedFieldState extends State<_TopSpeedField> {
 
   static double? _number(String raw) => double.tryParse(raw.trim().replaceAll(',', '.'));
 
-  /// km/h text -> whole mph, or '' when it is not a number.
-  static String _toMph(String raw) {
-    final kmh = _number(raw);
-    return kmh == null ? '' : (kmh * _mphPerKmh).round().toString();
+  bool get _canPress => _undoTo != null || _number(_text.text) != null;
+
+  void _set(String value) {
+    _text.text = value;
+    _text.selection = TextSelection.collapsed(offset: value.length);
+    widget.onChanged(value);
   }
 
-  void _changed(String raw) => widget.onChanged(_kmh ? _toMph(raw) : raw);
-
-  void _toggleUnit() {
-    setState(() {
-      _kmh = !_kmh;
-      if (_kmh) {
-        // Same speed, shown in km/h; the card keeps its value until the number is edited.
-        final mph = _number(widget.value);
-        _text.text = mph == null ? '' : (mph / _mphPerKmh).round().toString();
-      } else {
-        _text.text = widget.value;
-      }
-      _text.selection = TextSelection.collapsed(offset: _text.text.length);
-    });
+  void _convertOrUndo() {
+    final back = _undoTo;
+    if (back != null) {
+      setState(() => _undoTo = null);
+      _set(back);
+      return;
+    }
+    final kmh = _number(_text.text);
+    if (kmh == null) return;
+    final before = _text.text.trim();
+    setState(() => _undoTo = before);
+    _set((kmh * _mphPerKmh).round().toString());
   }
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodySmall;
-    return TextField(
-      controller: _text,
-      keyboardType: TextInputType.number,
-      decoration: InputDecoration(
-        labelText: 'Top speed',
-        helperText: _kmh ? '= ${widget.value.isEmpty ? '?' : widget.value} mph on the card' : null,
-        helperMaxLines: 2,
-        border: const OutlineInputBorder(),
-        isDense: true,
-        suffix: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _toggleUnit,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Text(
-              _kmh ? 'km/h \u21C4' : 'mph \u21C4',
-              style: style?.copyWith(color: Theme.of(context).colorScheme.primary),
-            ),
+    final undo = _undoTo;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _text,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Top speed',
+            border: OutlineInputBorder(),
+            isDense: true,
           ),
+          onChanged: (v) {
+            if (_undoTo != null) setState(() => _undoTo = null);
+            widget.onChanged(v);
+          },
         ),
-      ),
-      onChanged: _changed,
+        TextButton.icon(
+          onPressed: _canPress ? _convertOrUndo : null,
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          icon: Icon(undo == null ? Icons.swap_horiz : Icons.undo, size: 18),
+          label: Text(undo == null ? 'km/h \u2192 mph' : 'Undo ($undo)'),
+        ),
+      ],
     );
   }
 }
@@ -111,6 +119,7 @@ class TextSection extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (var i = 0; i < fields.length; i++) ...[
             if (i > 0) const SizedBox(width: 8),

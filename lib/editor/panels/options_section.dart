@@ -147,11 +147,19 @@ class OptionsSection extends StatelessWidget {
           runSpacing: 4,
           children: [
             for (final v in builtIn)
-              ChoiceChip(label: Text(v), selected: v == selected, onSelected: (_) => onSelect(v)),
+              ChoiceChip(
+                label: Text(v),
+                selected: v == selected,
+                onSelected: (_) => onSelect(v == selected ? '' : v),
+              ),
             for (final v in custom)
               GestureDetector(
                 onLongPress: () => _removeCustom(context, v, onRemove),
-                child: ChoiceChip(label: Text(v), selected: v == selected, onSelected: (_) => onSelect(v)),
+                child: ChoiceChip(
+                  label: Text(v),
+                  selected: v == selected,
+                  onSelected: (_) => onSelect(v == selected ? '' : v),
+                ),
               ),
             ActionChip(
               avatar: const Icon(Icons.add, size: 18),
@@ -198,8 +206,8 @@ class OptionsSection extends StatelessWidget {
                   for (final t in c.store.templates.values)
                     ChoiceChip(
                       label: Text(t.name),
-                      selected: t.id == c.template.id,
-                      onSelected: (_) => c.setTemplate(t.id),
+                      selected: t.id == p.templateId,
+                      onSelected: (_) => c.setTemplate(t.id == p.templateId ? '' : t.id),
                     ),
                 ],
               ),
@@ -227,7 +235,14 @@ class OptionsSection extends StatelessWidget {
         ),
         SectionCard(
           title: 'Class',
-          children: [_chips(AppConstants.carClasses, p.carClass, (v) => c.update((x) => x.carClass = v))],
+          // Tapping the chosen class again clears it, like the template chips.
+          children: [
+            _chips(
+              AppConstants.carClasses,
+              p.carClass,
+              (v) => c.update((x) => x.carClass = x.carClass == v ? '' : v),
+            ),
+          ],
         ),
         SectionCard(
           title: 'Drive',
@@ -278,7 +293,7 @@ class OptionsSection extends StatelessWidget {
                       ChoiceChip(
                         label: Text(code),
                         selected: code == p.country,
-                        onSelected: (_) => c.update((x) => x.country = code),
+                        onSelected: (_) => c.update((x) => x.country = code == p.country ? '' : code),
                       ),
                     for (final code in custom)
                       GestureDetector(
@@ -286,7 +301,7 @@ class OptionsSection extends StatelessWidget {
                         child: ChoiceChip(
                           label: Text(code),
                           selected: code == p.country,
-                          onSelected: (_) => c.update((x) => x.country = code),
+                          onSelected: (_) => c.update((x) => x.country = code == p.country ? '' : code),
                         ),
                       ),
                     ActionChip(
@@ -302,9 +317,11 @@ class OptionsSection extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               title: const Text('Flag behind the code'),
               subtitle: Text(
-                CountryFlags.has(p.country)
-                    ? 'Shows the flag of ${p.country} in the country block.'
-                    : 'No flag for ${p.country}.',
+                p.country.isEmpty
+                    ? 'Choose a country first.'
+                    : CountryFlags.has(p.country)
+                        ? 'Shows the flag of ${p.country} in the country block.'
+                        : 'No flag for ${p.country}.',
               ),
               value: p.showFlag,
               onChanged: (v) => c.update((x) => x.showFlag = v),

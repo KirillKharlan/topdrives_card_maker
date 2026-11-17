@@ -146,7 +146,8 @@ class CardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = template;
-    final frame = t.frames[project.carClass] ?? t.frames.values.first;
+    // No class chosen yet: the B frame stands in until one is picked.
+    final frame = t.frames[project.carClass] ?? t.frames['B'] ?? t.frames.values.first;
     final drivePrefix = project.drive.isEmpty ? '' : project.drive[0];
 
     // Card text must not depend on the phone's font-size setting.
