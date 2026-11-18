@@ -15,7 +15,8 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
   final hasPhoto = c.photoFile != null;
   var includeExtras = true;
   // The frames are drawn at 2400 px wide, so 2400 / 1338 shows them at their real size.
-  var exportScale = 2400 / 1338;
+  final highScale = 2400 / c.template.width;
+  var exportScale = highScale;
   var videoFps = 30;
   var gifFps = 20;
   var gifScale = 1.0;
@@ -247,7 +248,7 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
                       ChoiceChip(
                         label: const Text('High 2400 px'),
                         selected: exportScale != 1.0,
-                        onSelected: (_) => setSheetState(() => exportScale = 2400 / 1338),
+                        onSelected: (_) => setSheetState(() => exportScale = highScale),
                       ),
                     ],
                   ),

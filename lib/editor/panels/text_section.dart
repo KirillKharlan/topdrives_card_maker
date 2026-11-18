@@ -160,9 +160,15 @@ class TextSection extends StatelessWidget {
             keyboard: decimal,
             helper: p.accelIsNotApplicable ? 'Shown as N/A (top speed is below 60)' : null,
           ),
-          _field('Handling', p.handling, (v) => c.update((x) => x.handling = v),
+          _field(c.template.fieldLabels['handling'] ?? 'Handling', p.handling,
+              (v) => c.update((x) => x.handling = v),
               keyboard: number),
         ]),
+        // Only some templates have a place for the weight.
+        if (c.template.hasField('weight'))
+          _row([
+            _field('Weight', p.weight, (v) => c.update((x) => x.weight = v), keyboard: number),
+          ]),
       ],
     );
   }

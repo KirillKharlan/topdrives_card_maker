@@ -395,6 +395,8 @@ class TemplateSpec {
     required this.titleStyles,
     required this.prizeStyles,
     required this.flag,
+    this.classColors = const {},
+    this.fieldLabels = const {},
   });
 
   final String id, name;
@@ -417,6 +419,24 @@ class TemplateSpec {
   final Map<CardStyle, TitleStyleSpec> titleStyles;
   final Map<CardStyle, PrizeStyleSpec> prizeStyles;
   final FlagSpec flag;
+
+  /// Colour of each class (only used to tint the class chips of the editor).
+  final Map<String, Color> classColors;
+
+  /// Names of fields in the editor when they differ from the usual ones
+  /// (the beta template calls "handling" "Grip").
+  final Map<String, String> fieldLabels;
+
+  /// The template has a place for this field (not every template shows the tyres or the weight).
+  bool hasField(String key) => fields.containsKey(key);
+
+  /// The classes that have a frame, best first (the "none" frame is not a class).
+  List<String> get classes {
+    const order = ['S', 'A', 'B', 'C', 'D', 'E', 'F'];
+    final keys = frames.keys.where((k) => k != 'none').toList();
+    keys.sort((a, b) => order.indexOf(a).compareTo(order.indexOf(b)));
+    return keys;
+  }
 
   FieldRect field(String key) => fields[key]!;
 
@@ -450,6 +470,12 @@ class TemplateSpec {
       flag: j['flag'] == null
           ? FlagSpec.standard
           : FlagSpec.fromJson(j['flag'] as Map<String, dynamic>),
+      classColors: {
+        for (final e in ((j['classColors'] as Map<String, dynamic>?) ?? const <String, dynamic>{}).entries)
+          if (_color(e.value as String?) != null) e.key: _color(e.value as String?)!,
+      },
+      fieldLabels: ((j['fieldLabels'] as Map<String, dynamic>?) ?? const <String, dynamic>{})
+          .map((k, v) => MapEntry(k, v as String)),
       fields: (j['fields'] as Map<String, dynamic>)
           .map((k, v) => MapEntry(k, FieldRect.fromJson(v as Map<String, dynamic>))),
       titleStyles: {

@@ -37,6 +37,7 @@ class CardProject {
     this.topSpeed = '',
     this.accel = '',
     this.handling = '',
+    this.weight = '',
     this.drive = '',
     this.tyre = '',
     this.carClass = '', // empty: nothing chosen yet, the card is drawn without the class badge
@@ -114,6 +115,7 @@ class CardProject {
   String topSpeed;
   String accel;
   String handling;
+  String weight; // only the beta template has a place for it
   String drive;
   String tyre;
   String carClass;
@@ -172,6 +174,7 @@ class CardProject {
         'topSpeed': topSpeed,
         'accel': accel,
         'handling': handling,
+        'weight': weight,
         'drive': drive,
         'tyre': tyre,
         'carClass': carClass,
@@ -229,6 +232,7 @@ class CardProject {
       topSpeed: s('topSpeed', ''),
       accel: s('accel', ''),
       handling: s('handling', ''),
+      weight: s('weight', ''),
       drive: s('drive', 'RWD'),
       tyre: s('tyre', 'Standard'),
       carClass: s('carClass', 'B'),

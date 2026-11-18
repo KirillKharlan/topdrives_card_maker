@@ -1,0 +1,110 @@
+{
+  "id": "beta",
+  "name": "Beta",
+  "width": 1280,
+  "height": 797,
+  "cornerRadius": 0,
+  "textScale": 1.0,
+  "photoBackground": "#2B2B2B",
+  "frames": {
+    "S": "assets/frames/beta/S.png",
+    "A": "assets/frames/beta/A.png",
+    "B": "assets/frames/beta/B.png",
+    "C": "assets/frames/beta/C.png",
+    "D": "assets/frames/beta/D.png",
+    "none": "assets/frames/beta/none.png"
+  },
+  "classColors": {
+    "S": "#F1BB15",
+    "A": "#5C529E",
+    "B": "#3ABFF0",
+    "C": "#7CBE66",
+    "D": "#858384"
+  },
+  "fieldLabels": {
+    "handling": "Grip"
+  },
+  "prizeBanner": "assets/overlays/prize_car.png",
+  "prizeVisibleWidth": 0.092,
+  "logo": {
+    "x": 2,
+    "y": 0,
+    "w": 133,
+    "h": 95,
+    "padding": 6
+  },
+  "extras": {
+    "backdrop": "#000000",
+    "tagHeight": 52.6,
+    "tagPaddingLeft": 5.7,
+    "tagPaddingTop": 17.2,
+    "prizeIconHeight": 88,
+    "prizePaddingLeft": 0,
+    "prizeGap": 11.5,
+    "prizeTextSize": 39.2,
+    "prizeTextWidth": 957,
+    "tagPaddingBottom": 17.2,
+    "tagGap": 23.9,
+    "prizeLetterSpacing": 2.3,
+    "prizeTextStroke": 1.7,
+    "prizePaddingTop": 21,
+    "prizePaddingBottom": 2,
+    "prizeIconCrop": 0.82
+  },
+  "titleStyles": {
+    "fan": {
+      "x": 159,
+      "w": 828,
+      "brandSize": 78,
+      "modelSize": 78,
+      "baseline": 76,
+      "gapEm": 0.3,
+      "wrap": true,
+      "twoLineScale": 0.7,
+      "lineHeight": 0.93
+    },
+    "game": {
+      "x": 159,
+      "w": 828,
+      "brandSize": 74,
+      "modelSize": 74,
+      "baseline": 76,
+      "gapEm": 0.3,
+      "wrap": true,
+      "twoLineScale": 0.8,
+      "lineHeight": 0.93
+    }
+  },
+  "flag": {
+    "points": [[1152, 0], [1280, 0], [1280, 95.3], [1134, 95.3]],
+    "opacity": 0.62
+  },
+  "prizeStyles": {
+    "game": {
+      "paddingLeft": 60,
+      "paddingTop": 20.2,
+      "paddingBottom": 2,
+      "iconHeight": 114,
+      "iconCrop": 0.82,
+      "iconDy": 7.6,
+      "gap": 19,
+      "textSize": 39.2,
+      "textWidth": 536,
+      "letterSpacing": 2.8,
+      "textStroke": 1.7,
+      "lineHeight": 1.15
+    }
+  },
+  "fields": {
+    "year": { "x": 1011, "y": 6, "w": 130, "h": 80, "size": 70, "align": "center", "baseline": 72 },
+    "country": { "x": 1153, "y": 6, "w": 131, "h": 80, "size": 72, "align": "center", "baseline": 72 },
+    "topSpeed": { "x": 1024, "y": 99, "w": 243, "h": 120, "size": 92, "align": "center", "baseline": 193 },
+    "accel": { "x": 1024, "y": 269, "w": 243, "h": 120, "size": 92, "align": "center", "baseline": 363 },
+    "weight": { "x": 1024, "y": 439, "w": 243, "h": 120, "size": 92, "align": "center", "baseline": 533 },
+    "drivePrefix": { "x": 1024, "y": 609, "w": 112, "h": 120, "size": 92, "align": "center", "baseline": 702 },
+    "handling": { "x": 1151, "y": 609, "w": 114, "h": 120, "size": 92, "align": "center", "baseline": 702 },
+    "rq": { "x": 0, "y": 624, "w": 134, "h": 120, "size": 94, "align": "center", "baseline": 719 }
+  },
+  "blurSigma": 0,
+  "blurRegions": []
+}

@@ -28,6 +28,7 @@ flutter:
     - assets/templates/
     - assets/frames/
     - assets/frames/modern/
+    - assets/frames/beta/
     - assets/overlays/
     - assets/tags/
   fonts:

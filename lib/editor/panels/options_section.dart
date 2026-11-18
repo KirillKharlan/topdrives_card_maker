@@ -13,17 +13,6 @@ class OptionsSection extends StatelessWidget {
 
   final EditorController controller;
 
-  Widget _chips(List<String> values, String selected, void Function(String) onSelect) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: [
-        for (final v in values)
-          ChoiceChip(label: Text(v), selected: v == selected, onSelected: (_) => onSelect(v)),
-      ],
-    );
-  }
-
   Future<void> _addCountry(BuildContext context) async {
     final input = TextEditingController();
     final code = await showDialog<String>(
@@ -237,10 +226,22 @@ class OptionsSection extends StatelessWidget {
           title: 'Class',
           // Tapping the chosen class again clears it, like the template chips.
           children: [
-            _chips(
-              AppConstants.carClasses,
-              p.carClass,
-              (v) => c.update((x) => x.carClass = x.carClass == v ? '' : v),
+            // The classes the chosen template has a frame for (the beta template has five),
+            // tinted with the colour of the class when the template gives one.
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final v in c.template.classes)
+                  ChoiceChip(
+                    avatar: c.template.classColors[v] == null
+                        ? null
+                        : CircleAvatar(backgroundColor: c.template.classColors[v], radius: 7),
+                    label: Text(v),
+                    selected: v == p.carClass,
+                    onSelected: (_) => c.update((x) => x.carClass = x.carClass == v ? '' : v),
+                  ),
+              ],
             ),
           ],
         ),
@@ -261,7 +262,8 @@ class OptionsSection extends StatelessWidget {
             ),
           ],
         ),
-        SectionCard(
+        if (c.template.hasField('tyre'))
+          SectionCard(
           title: 'Tyres',
           children: [
             ListenableBuilder(

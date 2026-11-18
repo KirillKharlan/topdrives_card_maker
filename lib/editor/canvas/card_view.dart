@@ -203,10 +203,13 @@ class CardView extends StatelessWidget {
                 FieldText(scale: t.textScale, rect: t.field('topSpeed'), parts: [(project.topSpeed, true)]),
                 FieldText(scale: t.textScale, rect: t.field('accel'), parts: [(project.accelDisplay, true)]),
                 FieldText(scale: t.textScale, rect: t.field('handling'), parts: [(project.handling, true)]),
+                if (t.hasField('weight'))
+                  FieldText(scale: t.textScale, rect: t.field('weight'), parts: [(project.weight, true)]),
                 // The frame already contains "WD"; we add only R / F / 4.
                 FieldText(scale: t.textScale, rect: t.field('drivePrefix'), parts: [(drivePrefix, true)]),
                 // The word "Tyres" is part of the frame; we add only the tyre name before it.
-                ValueListenableBuilder<double>(
+                if (t.hasField('tyre'))
+                  ValueListenableBuilder<double>(
                   valueListenable: LayoutTweaks.tyreNameOffset,
                   builder: (context, offset, _) => FieldText(
                     scale: t.textScale,
