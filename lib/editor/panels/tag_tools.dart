@@ -84,11 +84,12 @@ Future<CardTag?> createTagFromPhoto(BuildContext context) async {
   return CardTag(image: fileName, text: typed.isEmpty ? 'Tag' : typed);
 }
 
-/// Saves a tag as a PNG picture to the phone's gallery and tells the person.
-Future<void> saveTagToPhone(BuildContext context, CardTag tag) async {
-  final messenger = ScaffoldMessenger.of(context);
+/// Saves a tag as a PNG picture to the phone's gallery. Returns a sentence for the person
+/// (done, or why it did not work); the picker shows it, because a snack bar would hide
+/// behind the picker sheet.
+Future<String> saveTagToPhone(CardTag tag) async {
   try {
-    Uint8List? png;
+    Uint8List png;
     if (tag.isImage) {
       final file = TagImages.fileOf(tag.image!);
       if (file == null || !await file.exists()) throw StateError('the picture of this tag is missing');
@@ -96,70 +97,11 @@ Future<void> saveTagToPhone(BuildContext context, CardTag tag) async {
     } else if (tag.asset != null) {
       png = (await rootBundle.load(tag.asset!)).buffer.asUint8List();
     } else {
-      png = await showDialog<Uint8List>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => _TagRenderer(tag: tag),
-      );
+      png = await CustomTagView.renderPng(tag.text ?? '', tag.colorValue ?? 0xFFF2C21B);
     }
-    if (png == null) return;
     await CardExporter.saveToGallery(png);
-    messenger.showSnackBar(const SnackBar(content: Text('Tag saved to gallery')));
+    return 'Tag saved to the gallery.';
   } catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text('Could not save the tag: $e')));
-  }
-}
-
-/// Draws a tag made of text for a moment and returns it as a picture (pops the PNG).
-class _TagRenderer extends StatefulWidget {
-  const _TagRenderer({required this.tag});
-
-  final CardTag tag;
-
-  @override
-  State<_TagRenderer> createState() => _TagRendererState();
-}
-
-class _TagRendererState extends State<_TagRenderer> {
-  final _key = GlobalKey();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _capture());
-  }
-
-  Future<void> _capture() async {
-    Uint8List? png;
-    try {
-      png = await CardExporter.captureVerified(_key, pixelRatio: 4);
-    } catch (_) {
-      png = null;
-    }
-    if (mounted) Navigator.pop(context, png);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Preparing the picture...'),
-            const SizedBox(height: 16),
-            RepaintBoundary(
-              key: _key,
-              child: CustomTagView(
-                text: widget.tag.text ?? '',
-                colorValue: widget.tag.colorValue ?? 0xFFF2C21B,
-                height: 100,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return 'Could not save the tag: $e';
   }
 }

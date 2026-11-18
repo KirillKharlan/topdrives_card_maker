@@ -93,6 +93,10 @@ claude/claude.md                 this file
 - `lib/editor/panels/tag_tools.dart`: `createTagFromPhoto` (image_picker -> name dialog -> optional LogoEditorScreen background removal, else
   `trimLogoMargins`/decode -> PNG in tag_images) and `saveTagToPhone` (asset: rootBundle bytes, image: file bytes, text tag: drawn in a dialog and
   captured with `captureVerified`, then `CardExporter.saveToGallery`). The picker (`tag_picker_sheet.dart`) has the button, the menu items and long-press.
+- Text tags: font is Roboto Medium (`TagRoboto`, bundled `assets/fonts/Roboto-Medium.ttf`), size 0.505 x tag height, no letter spacing (calibrated against the
+  game's tag PNGs: width matches within 3 px at 2400). v24 used Roboto Condensed drawn twice with an outline: wrong font, removed.
+  `CustomTagView.renderPng` draws a text tag straight to a PNG (no widget capture); v24's capture-in-a-dialog "Save to phone" failed silently and its snack bar
+  hid behind the picker sheet, so `saveTagToPhone` now returns a message that the picker shows in a status line under the tabs.
 - Deleting a tag from My tags does NOT delete its picture file (cards may still use it). Not compiled.
 
 ## Custom drive / tyres / km/h

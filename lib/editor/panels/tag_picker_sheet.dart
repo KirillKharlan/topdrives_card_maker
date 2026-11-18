@@ -61,6 +61,16 @@ class _TagPickerState extends State<_TagPicker> {
     if (!_selected.contains(tag)) setState(() => _selected.add(tag));
   }
 
+  /// Result of the last "save to phone", shown under the tabs.
+  String? _status;
+
+  Future<void> _save(CardTag tag) async {
+    setState(() => _status = 'Saving...');
+    final message = await saveTagToPhone(tag);
+    if (!mounted) return;
+    setState(() => _status = message);
+  }
+
   Future<void> _createFromPhoto() async {
     final tag = await createTagFromPhoto(context);
     if (tag == null) return;
@@ -139,7 +149,7 @@ class _TagPickerState extends State<_TagPicker> {
       message: _nameOf(tag),
       child: InkWell(
         onTap: () => _toggle(tag),
-        onLongPress: () => saveTagToPhone(context, tag),
+        onLongPress: () => _save(tag),
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
@@ -171,7 +181,7 @@ class _TagPickerState extends State<_TagPicker> {
                         if (value == 'edit') {
                           tag.isImage ? _rename(tag) : _edit(tag);
                         } else if (value == 'save') {
-                          saveTagToPhone(context, tag);
+                          _save(tag);
                         } else {
                           _delete(tag);
                         }
@@ -239,6 +249,14 @@ class _TagPickerState extends State<_TagPicker> {
               ),
             ),
             const TabBar(tabs: [Tab(text: 'All'), Tab(text: 'My tags')]),
+            if (_status != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(_status!, style: Theme.of(context).textTheme.bodyMedium),
+                ),
+              ),
             Expanded(
               child: ListenableBuilder(
                 listenable: widget.settings,
