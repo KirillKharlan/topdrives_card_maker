@@ -13,7 +13,8 @@
     "C": "assets/frames/super_rare.png",
     "D": "assets/frames/rare.png",
     "E": "assets/frames/uncommon.png",
-    "F": "assets/frames/common.png"
+    "F": "assets/frames/common.png",
+    "none": "assets/frames/none.png"
   },
   "prizeBanner": "assets/overlays/prize_car.png",
   "prizeVisibleWidth": 0.092,

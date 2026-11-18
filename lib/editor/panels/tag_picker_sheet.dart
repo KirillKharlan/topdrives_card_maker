@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/card_tag.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../data/tag_images.dart';
 import '../../templates/tag_catalog.dart';
 import '../../ui/common/dialogs.dart';
 import '../canvas/custom_tag_view.dart';
 import 'tag_editor_sheet.dart';
+import 'tag_tools.dart';
 
 /// Tag picker. "All" lists the ready-made tags and the user's own tags in one
-/// alphabetical list; "My tags" holds only the user's own tags, where they can
-/// be created, edited and deleted. Tap to select / unselect; "Done" returns
+/// alphabetical list; "My tags" holds only the user's own tags (made of text, or
+/// from a photo), where they can be created, edited and deleted. Long-pressing any tag
+/// saves it to the phone's gallery. Tap to select / unselect; "Done" returns
 /// the chosen tags in the order they were picked. Swiping the sheet away
 /// returns null (no change).
 Future<List<CardTag>?> showTagPicker(
@@ -40,7 +43,7 @@ class _TagPickerState extends State<_TagPicker> {
   String _query = '';
 
   static String _nameOf(CardTag tag) =>
-      tag.isCustom ? (tag.text ?? '') : TagCatalog.nameOf(tag.asset!);
+      tag.asset != null ? TagCatalog.nameOf(tag.asset!) : (tag.text ?? '');
 
   bool _matches(CardTag tag) => _nameOf(tag).toLowerCase().contains(_query);
 
@@ -56,6 +59,37 @@ class _TagPickerState extends State<_TagPicker> {
     await widget.settings.addCustomTag(tag);
     if (!mounted) return;
     if (!_selected.contains(tag)) setState(() => _selected.add(tag));
+  }
+
+  Future<void> _createFromPhoto() async {
+    final tag = await createTagFromPhoto(context);
+    if (tag == null) return;
+    await widget.settings.addCustomTag(tag);
+    if (!mounted) return;
+    if (!_selected.contains(tag)) setState(() => _selected.add(tag));
+  }
+
+  Future<void> _rename(CardTag tag) async {
+    final input = TextEditingController(text: tag.text ?? '');
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Rename tag'),
+        content: TextField(controller: input, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, input.text), child: const Text('Save')),
+        ],
+      ),
+    );
+    input.dispose();
+    final trimmed = name?.trim() ?? '';
+    if (trimmed.isEmpty) return;
+    final next = tag.renamed(trimmed);
+    await widget.settings.updateCustomTag(tag, next);
+    if (!mounted) return;
+    final index = _selected.indexOf(tag);
+    if (index >= 0) setState(() => _selected[index] = next);
   }
 
   Future<void> _edit(CardTag tag) async {
@@ -74,7 +108,15 @@ class _TagPickerState extends State<_TagPicker> {
   }
 
   Widget _preview(CardTag tag) {
-    if (!tag.isCustom) {
+    if (tag.isImage) {
+      return Image.file(
+        TagImages.fileOf(tag.image!)!,
+        fit: BoxFit.contain,
+        cacheHeight: 120,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+      );
+    }
+    if (tag.asset != null) {
       return Image.asset(tag.asset!, fit: BoxFit.contain, cacheHeight: 120);
     }
     return Align(
@@ -97,6 +139,7 @@ class _TagPickerState extends State<_TagPicker> {
       message: _nameOf(tag),
       child: InkWell(
         onTap: () => _toggle(tag),
+        onLongPress: () => saveTagToPhone(context, tag),
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
@@ -124,10 +167,19 @@ class _TagPickerState extends State<_TagPicker> {
                       padding: EdgeInsets.zero,
                       iconSize: 18,
                       icon: const Icon(Icons.more_vert),
-                      onSelected: (value) => value == 'edit' ? _edit(tag) : _delete(tag),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        PopupMenuItem(value: 'delete', child: Text('Delete')),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          tag.isImage ? _rename(tag) : _edit(tag);
+                        } else if (value == 'save') {
+                          saveTagToPhone(context, tag);
+                        } else {
+                          _delete(tag);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        PopupMenuItem(value: 'edit', child: Text(tag.isImage ? 'Rename' : 'Edit')),
+                        const PopupMenuItem(value: 'save', child: Text('Save to phone')),
+                        const PopupMenuItem(value: 'delete', child: Text('Delete')),
                       ],
                     ),
                   ),
@@ -210,10 +262,31 @@ class _TagPickerState extends State<_TagPicker> {
                               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                               child: Align(
                                 alignment: Alignment.centerLeft,
-                                child: OutlinedButton.icon(
-                                  onPressed: _create,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Create tag'),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: _create,
+                                      icon: const Icon(Icons.add),
+                                      label: const Text('Create tag'),
+                                    ),
+                                    OutlinedButton.icon(
+                                      onPressed: _createFromPhoto,
+                                      icon: const Icon(Icons.add_photo_alternate_outlined),
+                                      label: const Text('Tag from photo'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  'Long-press any tag to save it to your phone.',
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
                             ),

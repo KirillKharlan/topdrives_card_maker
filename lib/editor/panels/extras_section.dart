@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/card_tag.dart';
+import '../../data/tag_images.dart';
 import '../../templates/tag_catalog.dart';
 import '../canvas/custom_tag_view.dart';
 import '../editor_controller.dart';
@@ -66,7 +67,16 @@ class ExtrasSection extends StatelessWidget {
   }
 
   Widget _row(BuildContext context, int index, CardTag tag) {
-    final preview = tag.isCustom
+    final preview = tag.isImage
+        ? Tooltip(
+            message: tag.text ?? '',
+            child: Image.file(
+              TagImages.fileOf(tag.image!)!,
+              height: 34,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          )
+        : tag.isCustom
         ? GestureDetector(
             onTap: () => _editTag(context, index),
             child: CustomTagView(

@@ -13,7 +13,8 @@
     "C": "assets/frames/modern/C.png",
     "D": "assets/frames/modern/D.png",
     "E": "assets/frames/modern/E.png",
-    "F": "assets/frames/modern/F.png"
+    "F": "assets/frames/modern/F.png",
+    "none": "assets/frames/modern/none.png"
   },
   "prizeBanner": "assets/overlays/prize_car.png",
   "prizeVisibleWidth": 0.092,

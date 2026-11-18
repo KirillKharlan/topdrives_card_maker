@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/card_project.dart';
+import '../../data/tag_images.dart';
 import '../../templates/template_spec.dart';
 import 'custom_tag_view.dart';
 
@@ -34,6 +35,13 @@ class TagStrip extends StatelessWidget {
                   text: tag.text ?? '',
                   colorValue: tag.colorValue ?? 0xFFF2C21B,
                   height: ex.tagHeight * project.tagScale,
+                )
+              else if (tag.isImage)
+                Image.file(
+                  TagImages.fileOf(tag.image!)!,
+                  height: ex.tagHeight * project.tagScale,
+                  filterQuality: FilterQuality.high,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 )
               else
                 Image.asset(

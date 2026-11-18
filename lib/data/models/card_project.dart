@@ -39,7 +39,7 @@ class CardProject {
     this.handling = '',
     this.drive = '',
     this.tyre = '',
-    this.carClass = '', // empty: nothing chosen yet, the card is drawn with the B frame
+    this.carClass = '', // empty: nothing chosen yet, the card is drawn without the class badge
     this.rq = '',
     this.prize = false,
     this.prizeText = defaultPrizeText,

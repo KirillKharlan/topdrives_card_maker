@@ -114,7 +114,7 @@ class SettingsRepository extends ChangeNotifier {
   }
 
   Future<void> addCustomTag(CardTag tag) async {
-    if (!tag.isCustom || _customTags.contains(tag)) return;
+    if (tag.asset != null || _customTags.contains(tag)) return;
     _customTags.add(tag);
     await _save();
     notifyListeners();

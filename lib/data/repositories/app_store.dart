@@ -6,6 +6,7 @@ import '../../templates/template_registry.dart';
 import '../../templates/template_spec.dart';
 import '../models/card_project.dart';
 import '../models/photo_fill.dart';
+import '../tag_images.dart';
 import 'fill_store.dart';
 import 'media_library.dart';
 import 'project_repository.dart';
@@ -38,6 +39,7 @@ class AppStore {
     await store.logos.init(root);
     step('Loading videos…');
     await store.videos.init(root);
+    await TagImages.init(root);
     await store.fills.init(root);
     step('Loading cards…');
     await store.projects.init(root);
