@@ -7,6 +7,7 @@ import '../../templates/template_spec.dart';
 import '../models/card_project.dart';
 import '../models/photo_fill.dart';
 import '../tag_images.dart';
+import 'album_repository.dart';
 import 'fill_store.dart';
 import 'media_library.dart';
 import 'project_repository.dart';
@@ -21,6 +22,7 @@ class AppStore {
   final videos = MediaLibrary('videos');
   final fills = FillStore();
   final projects = ProjectRepository();
+  final albums = AlbumRepository();
   final settings = SettingsRepository();
   final Map<String, TemplateSpec> templates = {};
 
@@ -43,6 +45,8 @@ class AppStore {
     await store.fills.init(root);
     step('Loading cards…');
     await store.projects.init(root);
+    step('Loading albums…');
+    await store.albums.init(root);
     step('Loading settings…');
     await store.settings.init(root);
     step('Loading templates…');
@@ -82,6 +86,7 @@ class AppStore {
   Future<void> deleteProject(CardProject project) async {
     await fills.delete(project.fillFileName);
     await projects.delete(project.id);
+    await albums.removeCardEverywhere(project.id);
     await releaseVideo(project.videoId);
   }
 

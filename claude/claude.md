@@ -164,6 +164,14 @@ claude/claude.md                 this file
   Kotlin/XML is written by `tool/patch_android.py`. `_DownloadDialog` in update_prompt.dart: progress, "allow installing" step,
   fallback to the browser. Release-asset URL must end in `.apk` (`UpdateInfo.isDirectApk`), otherwise the old browser path is used.
 
+## Albums (not compiled)
+- Home app bar -> `AlbumsScreen` (lib/ui/albums/): tab "By brand" = built-in albums computed by `groupByBrand` (lib/data/brand_groups.dart; key = brand
+  trimmed + lower-case, empty brand = "No brand" last, cards sorted by model, nothing stored), tab "My albums" = `Album` (id, name, cardIds) in
+  `AlbumRepository` (`AppStore.albums`, file `card_maker/albums.json`). `AlbumScreen.brand/custom`, `PickCardsScreen` (multi-select, saved on Done via `setCards`),
+  `showAddToAlbumSheet` (checkbox per album + New album), reached from the card's long-press menu in `ProjectTile`
+  (`ProjectTile` got `onTap`, `selected`, `onRemoveFromAlbum`). `AppStore.deleteProject` calls `albums.removeCardEverywhere`.
+  Card ids that no longer exist are ignored when an album is shown. Tests: test/albums_test.dart.
+
 ## Known limitations / ideas
 - Sizes were calibrated against screenshots, partly on one phone; `textScale` is an estimate.
 - Content-aware fill takes a few seconds and can look streaky on asphalt.

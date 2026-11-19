@@ -4,6 +4,7 @@ import '../../data/models/card_project.dart';
 import '../../data/repositories/app_store.dart';
 import '../../editor/editor_screen.dart';
 import '../../update/update_prompt.dart';
+import '../albums/albums_screen.dart';
 import '../library/library_screen.dart';
 import 'project_tile.dart';
 
@@ -47,6 +48,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Card Maker'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.collections_bookmark_outlined),
+            tooltip: 'Albums',
+            onPressed: () => _open(AlbumsScreen(store: store)),
+          ),
           IconButton(
             icon: const Icon(Icons.photo_library_outlined),
             tooltip: 'Car photos',
