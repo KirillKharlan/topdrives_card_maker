@@ -84,18 +84,12 @@ class _AlbumsScreenState extends State<AlbumsScreen> with SingleTickerProviderSt
     if (all.isEmpty) {
       return const Center(child: Text('No cards yet. Albums by brand appear here.'));
     }
-    // A brand is shown when its name or any of its cards (model, name) matches.
-    final groups = all
-        .where((g) =>
-            _brandQuery.trim().isEmpty ||
-            textMatches(g.name, _brandQuery) ||
-            g.cards.any((c) => cardMatches(c, _brandQuery)))
-        .toList();
+    final groups = all.where((g) => textMatches(g.name, _brandQuery)).toList();
     return Column(
       children: [
         SearchField(
           controller: _brandSearch,
-          hint: 'Search by brand, model or name',
+          hint: 'Search by brand',
           onChanged: (v) => setState(() => _brandQuery = v),
         ),
         Expanded(
