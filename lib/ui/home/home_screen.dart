@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../data/card_search.dart';
 import '../../data/models/card_project.dart';
 import '../../data/repositories/app_store.dart';
 import '../../editor/editor_screen.dart';
 import '../../update/update_prompt.dart';
 import '../albums/albums_screen.dart';
 import '../library/library_screen.dart';
+import '../common/search_field.dart';
 import 'project_tile.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,6 +21,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   AppStore get store => widget.store;
+
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -78,20 +89,34 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListenableBuilder(
         listenable: store.projects,
         builder: (context, _) {
-          final items = store.projects.items;
-          if (items.isEmpty) {
+          final all = store.projects.items;
+          if (all.isEmpty) {
             return const Center(child: Text('No cards yet. Tap "New card".'));
           }
-          return GridView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.3,
-            ),
-            itemCount: items.length,
-            itemBuilder: (_, i) => ProjectTile(store: store, project: items[i]),
+          final items = all.where((p) => cardMatches(p, _query)).toList();
+          return Column(
+            children: [
+              SearchField(
+                controller: _searchController,
+                hint: 'Search by brand, model or name',
+                onChanged: (v) => setState(() => _query = v),
+              ),
+              Expanded(
+                child: items.isEmpty
+                    ? const Center(child: Text('Nothing found.'))
+                    : GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 1.3,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (_, i) => ProjectTile(store: store, project: items[i]),
+                      ),
+              ),
+            ],
           );
         },
       ),

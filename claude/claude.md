@@ -170,7 +170,7 @@ claude/claude.md                 this file
   `AlbumRepository` (`AppStore.albums`, file `card_maker/albums.json`). `AlbumScreen.brand/custom`, `PickCardsScreen` (multi-select, saved on Done via `setCards`),
   `showAddToAlbumSheet` (checkbox per album + New album), reached from the card's long-press menu in `ProjectTile`
   (`ProjectTile` got `onTap`, `selected`, `onRemoveFromAlbum`). `AppStore.deleteProject` calls `albums.removeCardEverywhere`.
-  Card ids that no longer exist are ignored when an album is shown. Tests: test/albums_test.dart.
+  Search (not compiled): `SearchField` (ui/common) + `cardMatches`/`textMatches` (data/card_search.dart, all words must occur, case-insensitive) on the home grid\n  (brand+model+name), on the By brand tab (brand name or any card matches) and on My albums (album name).\n  Card ids that no longer exist are ignored when an album is shown. Tests: test/albums_test.dart.
 
 ## Known limitations / ideas
 - Sizes were calibrated against screenshots, partly on one phone; `textScale` is an estimate.

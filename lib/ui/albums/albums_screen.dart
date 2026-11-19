@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../data/brand_groups.dart';
+import '../../data/card_search.dart';
 import '../../data/repositories/app_store.dart';
 import '../common/dialogs.dart';
+import '../common/search_field.dart';
 import 'album_screen.dart';
 
 /// Two tabs: built-in albums (one per brand, made automatically) and the
@@ -18,12 +20,18 @@ class AlbumsScreen extends StatefulWidget {
 
 class _AlbumsScreenState extends State<AlbumsScreen> with SingleTickerProviderStateMixin {
   late final TabController _tabs = TabController(length: 2, vsync: this);
+  final _brandSearch = TextEditingController();
+  final _albumSearch = TextEditingController();
+  String _brandQuery = '';
+  String _albumQuery = '';
 
   AppStore get store => widget.store;
 
   @override
   void dispose() {
     _tabs.dispose();
+    _brandSearch.dispose();
+    _albumSearch.dispose();
     super.dispose();
   }
 
@@ -72,33 +80,53 @@ class _AlbumsScreenState extends State<AlbumsScreen> with SingleTickerProviderSt
   }
 
   Widget _brandList(BuildContext context) {
-    final groups = groupByBrand(store.projects.items);
-    if (groups.isEmpty) {
+    final all = groupByBrand(store.projects.items);
+    if (all.isEmpty) {
       return const Center(child: Text('No cards yet. Albums by brand appear here.'));
     }
-    return ListView.builder(
-      itemCount: groups.length,
-      itemBuilder: (_, i) {
-        final group = groups[i];
-        return ListTile(
-          leading: _BrandAvatar(store: store, group: group),
-          title: Text(group.name),
-          subtitle: Text(_cardsText(group.cards.length)),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AlbumScreen.brand(store, group.key, group.name),
-            ),
-          ),
-        );
-      },
+    // A brand is shown when its name or any of its cards (model, name) matches.
+    final groups = all
+        .where((g) =>
+            _brandQuery.trim().isEmpty ||
+            textMatches(g.name, _brandQuery) ||
+            g.cards.any((c) => cardMatches(c, _brandQuery)))
+        .toList();
+    return Column(
+      children: [
+        SearchField(
+          controller: _brandSearch,
+          hint: 'Search by brand, model or name',
+          onChanged: (v) => setState(() => _brandQuery = v),
+        ),
+        Expanded(
+          child: groups.isEmpty
+              ? const Center(child: Text('Nothing found.'))
+              : ListView.builder(
+                  itemCount: groups.length,
+                  itemBuilder: (_, i) {
+                    final group = groups[i];
+                    return ListTile(
+                      leading: _BrandAvatar(store: store, group: group),
+                      title: Text(group.name),
+                      subtitle: Text(_cardsText(group.cards.length)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AlbumScreen.brand(store, group.key, group.name),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 
   Widget _myList(BuildContext context) {
-    final albums = store.albums.items;
-    if (albums.isEmpty) {
+    final all = store.albums.items;
+    if (all.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -114,23 +142,37 @@ class _AlbumsScreenState extends State<AlbumsScreen> with SingleTickerProviderSt
         ),
       );
     }
+    final albums = all.where((a) => textMatches(a.name, _albumQuery)).toList();
     final existing = {for (final p in store.projects.items) p.id};
-    return ListView.builder(
-      itemCount: albums.length,
-      itemBuilder: (_, i) {
-        final album = albums[i];
-        final count = album.cardIds.where(existing.contains).length;
-        return ListTile(
-          leading: const CircleAvatar(child: Icon(Icons.collections_bookmark_outlined)),
-          title: Text(album.name),
-          subtitle: Text(_cardsText(count)),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AlbumScreen.custom(store, album.id)),
-          ),
-        );
-      },
+    return Column(
+      children: [
+        SearchField(
+          controller: _albumSearch,
+          hint: 'Search albums by name',
+          onChanged: (v) => setState(() => _albumQuery = v),
+        ),
+        Expanded(
+          child: albums.isEmpty
+              ? const Center(child: Text('Nothing found.'))
+              : ListView.builder(
+                  itemCount: albums.length,
+                  itemBuilder: (_, i) {
+                    final album = albums[i];
+                    final count = album.cardIds.where(existing.contains).length;
+                    return ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.collections_bookmark_outlined)),
+                      title: Text(album.name),
+                      subtitle: Text(_cardsText(count)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => AlbumScreen.custom(store, album.id)),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
