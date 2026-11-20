@@ -1,15 +1,22 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'iso_countries.dart';
+
 /// Simple painted flags for the built-in country codes. They are drawn to fill
 /// whatever rectangle they get (the badge behind the country code), so details
 /// are simplified: no coats of arms, few stars.
 class CountryFlags {
   CountryFlags._();
 
-  static bool has(String code) => _flags.containsKey(code.toUpperCase());
+  /// The flag is drawn by code (built-in codes).
+  static bool hasPainted(String code) => _flags.containsKey(code.toUpperCase());
 
-  /// Paints the flag of [code] over [r]; does nothing for an unknown code.
+  /// There is a flag for [code]: painted, or a picture of an ISO country.
+  static bool has(String code) => hasPainted(code) || IsoCountries.has(code);
+
+  /// Paints the flag of [code] over [r]; does nothing for a code without a painted
+  /// flag (the others are pictures, see FlagBadge).
   static void paint(Canvas canvas, Rect r, String code) {
     final painter = _flags[code.toUpperCase()];
     if (painter == null) return;

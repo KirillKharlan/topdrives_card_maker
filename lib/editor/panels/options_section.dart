@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_constants.dart';
 import '../../data/country_flags.dart';
+import '../../data/iso_countries.dart';
 import '../../data/models/card_style.dart';
+import '../../ui/common/country_flag_thumb.dart';
 import '../../ui/common/dialogs.dart';
 import '../editor_controller.dart';
+import 'country_picker.dart';
 import 'section_card.dart';
 
 /// Pick-one options: style, class, drive, tyres, country.
@@ -12,6 +15,13 @@ class OptionsSection extends StatelessWidget {
   const OptionsSection({super.key, required this.controller});
 
   final EditorController controller;
+
+  Future<void> _pickCountry(BuildContext context, String current) async {
+    final code = await showCountryPicker(context, selected: current);
+    if (code == null) return;
+    if (!IsoCountries.has(code)) await controller.store.settings.addCountry(code);
+    controller.update((x) => x.country = code);
+  }
 
   Future<void> _addCountry(BuildContext context) async {
     final input = TextEditingController();
@@ -283,35 +293,71 @@ class OptionsSection extends StatelessWidget {
         SectionCard(
           title: 'Country',
           children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              leading: CountryFlagThumb(code: p.country, width: 36, height: 24),
+              title: Text(
+                p.country.isEmpty
+                    ? 'No country (tap to search)'
+                    : IsoCountries.nameOf(p.country) == null
+                        ? p.country
+                        : '${p.country} \u00b7 ${IsoCountries.nameOf(p.country)}',
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (p.country.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      tooltip: 'Clear',
+                      onPressed: () => c.update((x) => x.country = ''),
+                    ),
+                  const Icon(Icons.search),
+                ],
+              ),
+              onTap: () => _pickCountry(context, p.country),
+            ),
+            // One scrolling row of quick picks; every other country is in the search.
             ListenableBuilder(
               listenable: c.store.settings,
               builder: (context, _) {
                 final custom = c.store.settings.customCountries;
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    for (final code in AppConstants.builtInCountries)
-                      ChoiceChip(
-                        label: Text(code),
-                        selected: code == p.country,
-                        onSelected: (_) => c.update((x) => x.country = code == p.country ? '' : code),
-                      ),
-                    for (final code in custom)
-                      GestureDetector(
-                        onLongPress: () => _removeCountry(context, code),
-                        child: ChoiceChip(
-                          label: Text(code),
-                          selected: code == p.country,
-                          onSelected: (_) => c.update((x) => x.country = code == p.country ? '' : code),
+                return SizedBox(
+                  height: 48,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (final code in AppConstants.builtInCountries)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(code),
+                            selected: code == p.country,
+                            onSelected: (_) =>
+                                c.update((x) => x.country = code == p.country ? '' : code),
+                          ),
                         ),
+                      for (final code in custom)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onLongPress: () => _removeCountry(context, code),
+                            child: ChoiceChip(
+                              label: Text(code),
+                              selected: code == p.country,
+                              onSelected: (_) =>
+                                  c.update((x) => x.country = code == p.country ? '' : code),
+                            ),
+                          ),
+                        ),
+                      ActionChip(
+                        avatar: const Icon(Icons.add, size: 18),
+                        label: const Text('Custom'),
+                        onPressed: () => _addCountry(context),
                       ),
-                    ActionChip(
-                      avatar: const Icon(Icons.add, size: 18),
-                      label: const Text('Custom'),
-                      onPressed: () => _addCountry(context),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),

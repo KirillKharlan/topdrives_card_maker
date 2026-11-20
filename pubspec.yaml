@@ -31,6 +31,7 @@ flutter:
     - assets/frames/beta/
     - assets/overlays/
     - assets/tags/
+    - assets/flags/
   fonts:
     - family: RobotoCondensed
       fonts:
