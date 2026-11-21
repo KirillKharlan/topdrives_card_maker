@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../data/backup_service.dart';
@@ -83,16 +84,24 @@ Future<void> _restore(BuildContext context) async {
     action: 'Choose file',
   );
   if (!ok) return;
-  final picked = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: const ['zip'],
+  const zipType = XTypeGroup(
+    label: 'Backup',
+    extensions: ['zip'],
+    mimeTypes: ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'],
+    uniformTypeIdentifiers: ['public.zip-archive'],
   );
-  final path = picked?.files.single.path;
-  if (path == null) return;
+  final picked = await openFile(acceptedTypeGroups: const [zipType]);
+  if (picked == null) return;
+  // The picked file may be a content address, so it is copied into a normal file first.
+  final tmp = await getTemporaryDirectory();
+  final copy = File('${tmp.path}/restore_backup.zip');
+  if (await copy.exists()) await copy.delete();
+  await picked.saveTo(copy.path);
   if (!context.mounted) return;
   _showBusy(context, 'Restoring…');
   try {
-    await BackupService.restore(File(path));
+    await BackupService.restore(copy);
+    if (await copy.exists()) await copy.delete();
     navigator.pop();
     if (!context.mounted) return;
     await showDialog<void>(

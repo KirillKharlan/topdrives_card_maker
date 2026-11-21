@@ -192,7 +192,7 @@ claude/claude.md                 this file
   3 columns, decodes one card at a time, scales so no side exceeds 8192. UI: `showAlbumExportSheet` (progress dialog, Cancel).
 - Backup: `BackupService.create/restore` (archive ^3.6.1 `ZipFileEncoder.zipDirectory`, `extractFileToDisk`, both wrapped in `Future.sync` inside `Isolate.run` so a sync or async
   API both work), restore extracts to card_maker_restore, renames old root to card_maker_before_restore, deletes it after success, then the UI calls `exit(0)`.
-  `file_picker ^8.1.2` picks the zip. Tests: test/collection_test.dart.
+  `file_selector ^1.0.3` (+ `file_selector_android ^0.5.0`) picks the zip and the file is copied to a temp file first (file_picker 8.x failed the CI build: compileSdk 34 vs 36 required by flutter_plugin_android_lifecycle). Tests: test/collection_test.dart.
 
 ## Known limitations / ideas
 - Sizes were calibrated against screenshots, partly on one phone; `textScale` is an estimate.
