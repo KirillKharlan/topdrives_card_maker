@@ -90,6 +90,13 @@ class AppStore {
     await releaseVideo(project.videoId);
   }
 
+  /// A copy of the card; it stays in the same albums as the original.
+  Future<CardProject> duplicateProject(CardProject source) async {
+    final copy = await projects.duplicate(source);
+    await albums.addCopyOf(source.id, copy.id);
+    return copy;
+  }
+
   Future<void> deletePhoto(String id) async {
     await projects.detachPhoto(id);
     await photos.delete(id);

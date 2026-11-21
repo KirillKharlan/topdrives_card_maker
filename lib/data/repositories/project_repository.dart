@@ -47,12 +47,24 @@ class ProjectRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> duplicate(CardProject source) async {
+  Future<CardProject> duplicate(CardProject source) async {
     final copy = CardProject.fromJson(source.toJson())
       ..id = CardProject.newId()
       ..name = '${source.name} copy'
       ..updatedAt = DateTime.now();
     await save(copy);
+    return copy;
+  }
+
+  /// Stars or un-stars several cards at once. The change date stays, so the
+  /// order of the cards does not move.
+  Future<void> setFavorite(Iterable<String> ids, bool value) async {
+    final wanted = ids.toSet();
+    for (final p in _items.where((p) => wanted.contains(p.id) && p.favorite != value).toList()) {
+      p.favorite = value;
+      await writeJsonFile(_fileOf(p.id), p.toJson());
+    }
+    notifyListeners();
   }
 
   int countUsingPhoto(String photoId) => _items.where((p) => p.photoId == photoId).length;

@@ -172,6 +172,28 @@ claude/claude.md                 this file
   (`ProjectTile` got `onTap`, `selected`, `onRemoveFromAlbum`). `AppStore.deleteProject` calls `albums.removeCardEverywhere`.
   Search (not compiled): `SearchField` (ui/common) + `cardMatches`/`textMatches` (data/card_search.dart, all words must occur, case-insensitive) on the home grid\n  (brand+model+name), on the By brand tab (brand name only) and on My albums (album name).\n  Card ids that no longer exist are ignored when an album is shown. Tests: test/albums_test.dart.
 
+## Countries (not compiled)
+- `lib/data/iso_countries.dart`: `IsoCountries.all` = ISO alpha-2 + English name only (249 ISO + XK), `search` (folded, aliases, exact code first), `byName`, `assetPath`.
+  Flag pictures: `assets/flags/xx.png` 240x160 (country-flag-icons 3x2, MIT, rendered with sharp, palette PNG), declared in pubspec.
+- `CountryFlags.hasPainted` = flag drawn by code (the old 20); `CountryFlags.has` = painted OR in IsoCountries. `FlagBadge` draws pictures
+  with Positioned.fromRect(bounds) > ClipPath(polygon) > Opacity > Image.asset(BoxFit.fill); the flag block is ~149x97.5 units (3:2) so fill barely distorts.
+- UI: Country card in options_section = ListTile (CountryFlagThumb + code + name, clear, search) + one horizontal chip row; `showCountryPicker` (bottom sheet,
+  `SearchField`, itemExtent 44 rows). Non-ISO typed code is offered as custom code. Tests: test/iso_countries_test.dart.
+
+## Collections, favorites, export, backup (not compiled)
+- `lib/ui/collection/`: `CollectionController` (query, `CardSort`, class/country/favorites filters, multi-select; `apply()` does search+filter+sort),
+  `CardCollection` (search + `_FilterBar` chips + 2-column grid of `ProjectTile`; used by HomeScreen, AlbumScreen and the Favorites tab; passes
+  albumId for Remove from album / Set as cover, `onStartSelect` for the tile menu), `selectionAppBar` (star, add to album, export, delete / remove from album).
+- `CardProject.favorite` (json `favorite`); `ProjectRepository.setFavorite(ids, value)` keeps updatedAt; `ProjectRepository.duplicate` returns the copy and
+  `AppStore.duplicateProject` also calls `AlbumRepository.addCopyOf`. `Album.coverId` (kept valid by removeCard/setCards/removeCardEverywhere), `addCards`, `setCover`.
+- `groupByCountry` in data/brand_groups.dart (same `BrandGroup` class). AlbumsScreen has 4 tabs (brand, country, favorites, my albums); `AlbumScreen.brand/country/custom`.
+- Album export: `AlbumExporter.renderCard` builds `CardComposition` in a root Overlay entry at left = -(width+400) (Positioned width/height + Align topLeft so the
+  composition keeps its own height), precaches `ResizeImage(FileImage(photo), width: 2600)`, waits 250 ms, then `CardExporter.captureVerified`. `collage()` lays out
+  3 columns, decodes one card at a time, scales so no side exceeds 8192. UI: `showAlbumExportSheet` (progress dialog, Cancel).
+- Backup: `BackupService.create/restore` (archive ^3.6.1 `ZipFileEncoder.zipDirectory`, `extractFileToDisk`, both wrapped in `Future.sync` inside `Isolate.run` so a sync or async
+  API both work), restore extracts to card_maker_restore, renames old root to card_maker_before_restore, deletes it after success, then the UI calls `exit(0)`.
+  `file_picker ^8.1.2` picks the zip. Tests: test/collection_test.dart.
+
 ## Known limitations / ideas
 - Sizes were calibrated against screenshots, partly on one phone; `textScale` is an estimate.
 - Content-aware fill takes a few seconds and can look streaky on asphalt.

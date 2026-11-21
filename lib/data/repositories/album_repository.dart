@@ -62,7 +62,11 @@ class AlbumRepository extends ChangeNotifier {
   Future<void> toggleCard(String albumId, String cardId) async {
     final album = byId(albumId);
     if (album == null) return;
-    if (!album.cardIds.remove(cardId)) album.cardIds.add(cardId);
+    if (!album.cardIds.remove(cardId)) {
+      album.cardIds.add(cardId);
+    } else if (album.coverId == cardId) {
+      album.coverId = null;
+    }
     await _save();
     notifyListeners();
   }
@@ -71,6 +75,42 @@ class AlbumRepository extends ChangeNotifier {
     final album = byId(albumId);
     if (album == null) return;
     album.cardIds.remove(cardId);
+    if (album.coverId == cardId) album.coverId = null;
+    await _save();
+    notifyListeners();
+  }
+
+  /// Makes [cardId] the picture of the album in the list (adds it when it is not in).
+  Future<void> setCover(String albumId, String cardId) async {
+    final album = byId(albumId);
+    if (album == null) return;
+    if (!album.cardIds.contains(cardId)) album.cardIds.add(cardId);
+    album.coverId = cardId;
+    await _save();
+    notifyListeners();
+  }
+
+  /// Adds several cards at once (those already in are skipped).
+  Future<void> addCards(String albumId, Iterable<String> ids) async {
+    final album = byId(albumId);
+    if (album == null) return;
+    for (final id in ids) {
+      if (!album.cardIds.contains(id)) album.cardIds.add(id);
+    }
+    await _save();
+    notifyListeners();
+  }
+
+  /// A copy of a card goes into every album the original is in (right after it).
+  Future<void> addCopyOf(String sourceId, String copyId) async {
+    var changed = false;
+    for (final a in _items) {
+      final at = a.cardIds.indexOf(sourceId);
+      if (at < 0 || a.cardIds.contains(copyId)) continue;
+      a.cardIds.insert(at + 1, copyId);
+      changed = true;
+    }
+    if (!changed) return;
     await _save();
     notifyListeners();
   }
@@ -88,6 +128,7 @@ class AlbumRepository extends ChangeNotifier {
     album.cardIds
       ..clear()
       ..addAll(next);
+    if (album.coverId != null && !next.contains(album.coverId)) album.coverId = null;
     await _save();
     notifyListeners();
   }
@@ -96,7 +137,10 @@ class AlbumRepository extends ChangeNotifier {
   Future<void> removeCardEverywhere(String cardId) async {
     var changed = false;
     for (final a in _items) {
-      if (a.cardIds.remove(cardId)) changed = true;
+      if (a.cardIds.remove(cardId)) {
+        changed = true;
+        if (a.coverId == cardId) a.coverId = null;
+      }
     }
     if (!changed) return;
     await _save();

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../data/card_search.dart';
 import '../../data/models/card_project.dart';
 import '../../data/repositories/app_store.dart';
 import '../../editor/editor_screen.dart';
 import '../../update/update_prompt.dart';
 import '../albums/albums_screen.dart';
+import '../backup/backup_sheet.dart';
+import '../collection/card_collection.dart';
+import '../collection/collection_controller.dart';
+import '../collection/selection_app_bar.dart';
 import '../library/library_screen.dart';
-import '../common/search_field.dart';
-import 'project_tile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.store});
@@ -22,12 +23,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   AppStore get store => widget.store;
 
-  final _searchController = TextEditingController();
-  String _query = '';
+  final _controller = CollectionController();
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -55,71 +55,68 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Card Maker'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.collections_bookmark_outlined),
-            tooltip: 'Albums',
-            onPressed: () => _open(AlbumsScreen(store: store)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.photo_library_outlined),
-            tooltip: 'Car photos',
-            onPressed: () => _open(LibraryScreen.photos(store)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.shield_outlined),
-            tooltip: 'Logos',
-            onPressed: () => _open(LibraryScreen.logos(store)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'Version and updates',
-            onPressed: () => showAppInfoDialog(context, store.settings),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _newCard,
-        icon: const Icon(Icons.add),
-        label: const Text('New card'),
-      ),
-      body: ListenableBuilder(
-        listenable: store.projects,
-        builder: (context, _) {
-          final all = store.projects.items;
-          if (all.isEmpty) {
-            return const Center(child: Text('No cards yet. Tap "New card".'));
-          }
-          final items = all.where((p) => cardMatches(p, _query)).toList();
-          return Column(
-            children: [
-              SearchField(
-                controller: _searchController,
-                hint: 'Search by brand, model or name',
-                onChanged: (v) => setState(() => _query = v),
-              ),
-              Expanded(
-                child: items.isEmpty
-                    ? const Center(child: Text('Nothing found.'))
-                    : GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          childAspectRatio: 1.3,
-                        ),
-                        itemCount: items.length,
-                        itemBuilder: (_, i) => ProjectTile(store: store, project: items[i]),
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
+    return ListenableBuilder(
+      listenable: Listenable.merge([store.projects, _controller]),
+      builder: (context, _) {
+        final all = store.projects.items;
+        return Scaffold(
+          appBar: _controller.selecting
+              ? selectionAppBar(
+                  context,
+                  store: store,
+                  controller: _controller,
+                  exportName: 'cards',
+                )
+              : AppBar(
+                  title: const Text('Card Maker'),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.collections_bookmark_outlined),
+                      tooltip: 'Albums',
+                      onPressed: () => _open(AlbumsScreen(store: store)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.photo_library_outlined),
+                      tooltip: 'Car photos',
+                      onPressed: () => _open(LibraryScreen.photos(store)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.shield_outlined),
+                      tooltip: 'Logos',
+                      onPressed: () => _open(LibraryScreen.logos(store)),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'select') _controller.startSelecting();
+                        if (value == 'backup') showBackupSheet(context);
+                        if (value == 'info') showAppInfoDialog(context, store.settings);
+                      },
+                      itemBuilder: (_) => [
+                        if (all.isNotEmpty)
+                          const PopupMenuItem(value: 'select', child: Text('Select cards')),
+                        const PopupMenuItem(value: 'backup', child: Text('Backup and restore')),
+                        const PopupMenuItem(value: 'info', child: Text('Version and updates')),
+                      ],
+                    ),
+                  ],
+                ),
+          floatingActionButton: _controller.selecting
+              ? null
+              : FloatingActionButton.extended(
+                  onPressed: _newCard,
+                  icon: const Icon(Icons.add),
+                  label: const Text('New card'),
+                ),
+          body: all.isEmpty
+              ? const Center(child: Text('No cards yet. Tap "New card".'))
+              : CardCollection(
+                  store: store,
+                  controller: _controller,
+                  cards: all,
+                  bottomPadding: 88,
+                ),
+        );
+      },
     );
   }
 }

@@ -16,6 +16,8 @@ class ProjectTile extends StatelessWidget {
     this.onTap,
     this.selected = false,
     this.onRemoveFromAlbum,
+    this.onSetCover,
+    this.onStartSelect,
   });
 
   final AppStore store;
@@ -29,6 +31,12 @@ class ProjectTile extends StatelessWidget {
 
   /// When set (inside a user's album) the menu gets "Remove from album".
   final VoidCallback? onRemoveFromAlbum;
+
+  /// When set (inside a user's album) the menu gets Set as album cover.
+  final VoidCallback? onSetCover;
+
+  /// When set the menu gets Select (starts picking several cards).
+  final VoidCallback? onStartSelect;
 
   void _open(BuildContext context) {
     Navigator.push(
@@ -44,6 +52,23 @@ class ProjectTile extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (onStartSelect != null)
+              ListTile(
+                leading: const Icon(Icons.checklist),
+                title: const Text('Select'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  onStartSelect!();
+                },
+              ),
+            ListTile(
+              leading: Icon(project.favorite ? Icons.star : Icons.star_outline),
+              title: Text(project.favorite ? 'Remove from favorites' : 'Add to favorites'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                store.projects.setFavorite([project.id], !project.favorite);
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.collections_bookmark_outlined),
               title: const Text('Add to album'),
@@ -52,6 +77,15 @@ class ProjectTile extends StatelessWidget {
                 showAddToAlbumSheet(context, store, project);
               },
             ),
+            if (onSetCover != null)
+              ListTile(
+                leading: const Icon(Icons.image_outlined),
+                title: const Text('Set as album cover'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  onSetCover!();
+                },
+              ),
             if (onRemoveFromAlbum != null)
               ListTile(
                 leading: const Icon(Icons.remove_circle_outline),
@@ -66,7 +100,7 @@ class ProjectTile extends StatelessWidget {
               title: const Text('Duplicate'),
               onTap: () {
                 Navigator.pop(sheetContext);
-                store.projects.duplicate(project);
+                store.duplicateProject(project);
               },
             ),
             ListTile(
@@ -106,6 +140,17 @@ class ProjectTile extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(child: _content(template)),
+            if (project.favorite)
+              const Positioned(
+                top: 6,
+                left: 6,
+                child: Icon(
+                  Icons.star,
+                  size: 20,
+                  color: Colors.amber,
+                  shadows: [Shadow(blurRadius: 3, color: Colors.black87)],
+                ),
+              ),
             if (selected)
               Positioned(
                 top: 6,

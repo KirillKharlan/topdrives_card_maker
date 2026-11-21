@@ -43,6 +43,7 @@ class CardProject {
     this.carClass = '', // empty: nothing chosen yet, the card is drawn without the class badge
     this.rq = '',
     this.prize = false,
+    this.favorite = false,
     this.prizeText = defaultPrizeText,
     List<CardTag>? tags,
     DateTime? updatedAt,
@@ -120,6 +121,9 @@ class CardProject {
   String tyre;
   String carClass;
   String rq;
+
+  /// Marked with the star; the Favorites album lists these cards.
+  bool favorite;
   bool prize;
   String prizeText;
   /// Tags shown above the card, left to right (ready-made or custom).
@@ -179,6 +183,7 @@ class CardProject {
         'tyre': tyre,
         'carClass': carClass,
         'rq': rq,
+        'favorite': favorite,
         'prize': prize,
         'prizeText': prizeText,
         'tags': tags.map((t) => t.toJson()).toList(),
@@ -237,6 +242,7 @@ class CardProject {
       tyre: s('tyre', 'Standard'),
       carClass: s('carClass', 'B'),
       rq: s('rq', ''),
+      favorite: j['favorite'] as bool? ?? false,
       prize: (j['prize'] as bool?) ?? false,
       prizeText: s('prizeText', defaultPrizeText),
       tags: tags,
