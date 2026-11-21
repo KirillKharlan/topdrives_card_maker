@@ -15,6 +15,7 @@ class SettingsRepository extends ChangeNotifier {
   final List<String> _customTyres = [];
   final List<CardTag> _customTags = [];
   double _tyreNameOffset = 0;
+  bool _betaMatches = false;
 
   List<String> get customCountries => List.unmodifiable(_customCountries);
 
@@ -24,6 +25,17 @@ class SettingsRepository extends ChangeNotifier {
 
   /// Tags the user built; offered in the tag picker next to the ready-made ones.
   List<CardTag> get customTags => List.unmodifiable(_customTags);
+
+  /// Show "Closest in the beta game" in the editor of beta-template cards.
+  /// Off until the person turns it on in the menu of the home screen.
+  bool get betaMatchesEnabled => _betaMatches;
+
+  Future<void> setBetaMatches(bool value) async {
+    if (_betaMatches == value) return;
+    _betaMatches = value;
+    await _save();
+    notifyListeners();
+  }
 
   Future<void> init(Directory root) async {
     _file = File('${root.path}/settings.json');
@@ -40,6 +52,8 @@ class SettingsRepository extends ChangeNotifier {
         _tyreNameOffset = offset.toDouble();
         LayoutTweaks.tyreNameOffset.value = _tyreNameOffset;
       }
+      final beta = data['betaMatches'];
+      if (beta is bool) _betaMatches = beta;
       final tags = data['customTags'];
       if (tags is List) {
         for (final e in tags) {
@@ -143,5 +157,6 @@ class SettingsRepository extends ChangeNotifier {
         'customTyres': _customTyres,
         'customTags': _customTags.map((t) => t.toJson()).toList(),
         'tyreNameOffset': _tyreNameOffset,
+        'betaMatches': _betaMatches,
       });
 }

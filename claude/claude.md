@@ -273,3 +273,21 @@ claude/claude.md                 this file
   (fades over ~10 working px; texture untouched). NOT benchmarked against the old result: a Python PatchMatch stand-in was too weak to be a test
   (13 dB even before correction), so only the logic is verified. To judge the fill properly we need ORIGINAL photos (not screenshots).
 - Known ceiling: PatchMatch re-arranges existing pixels, it cannot invent content; big extensions need a generative model (API) or an on-device model (LaMa).
+
+## Closest beta cards (not compiled)
+- Every match shows ALL numbers of the beta card (top speed, 0-60, weight, grip, RQ, year, drive), also those the person has not typed in yet (no difference then);
+  only typed-in numbers are compared and counted in the distance. The big badge on the left is the RQ in the colour of its class.
+- Optional and OFF by default: `SettingsRepository.betaMatchesEnabled` (settings.json key `betaMatches`, `setBetaMatches`), toggled by the checked item
+  "Compare with beta cards" in the home screen's three-dot menu. `FieldsPanel` shows the section only when the template is beta AND the setting is on (it listens to settings too).
+- Beta template only: `BetaMatchesSection` (lib/editor/panels/beta_matches_section.dart, put in `FieldsPanel` right after `TextSection` when `project.templateId == 'beta'`)
+  lists the 5 cards of the old beta game that are closest to the numbers typed in (top speed, 0-60, weight, grip, RQ, year, drive; needs at least 2 stats).
+- Data: `assets/data/beta_cards.json` (111 cards, registered in pubspec `assets/data/`), made by `tool/make_beta_cards_json.py` from `tool/beta_cards_source.csv`.
+  The CSV comes from the user's screenshots of the beta game (OCR with a digit classifier built from the game's own font), so it is incomplete and has errors:
+  names that could not be read are empty (UI: "Name not read"), doubtful names carry `q` (UI: trailing "?"). Keys: n name, y year, c country, r rating (RQ, number in the lower left corner),
+  s mph, z 0-60, w weight, d 4WD/RWD/FWD, g grip, gh = grip is 100 or more (the beta card shows only two digits, so only "100+" is known), cls class from the rating.
+- Rating -> class colour, measured on the screenshots: D grey 3-5, C green 6-7, B blue 8-10, A purple 11-15, S yellow 16-19 (same colours as `classColors` in beta.json).
+- Algorithm (lib/data/beta_cards.dart, `BetaMatcher`): per value (difference / tolerance)^2, tolerances 8 mph, 0.4 s, 100 weight, 6 grip, 1.5 RQ, 4 years; weighted mean (RQ 1.2, year 0.5, others 1);
+  +1.0 for another drive, +0.5 for another class when no RQ is typed. Closeness shown = exp(-distance / 2). A card with hidden grip matches any typed grip >= 100.
+  Tests: test/beta_matches_test.dart. Not compiled; the algorithm was prototyped in Python first.
+- The zip of this iteration had `pubspec.yaml`, `pubspec.lock`, `README.md` filled with zero bytes (and a broken .git). pubspec.yaml and README.md were restored from loose git objects
+  (README may lack the last ~500 bytes of edits), pubspec.lock was removed (CI runs `flutter pub get`).

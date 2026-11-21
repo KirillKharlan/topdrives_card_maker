@@ -50,6 +50,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _toggleBetaMatches() async {
+    final on = !store.settings.betaMatchesEnabled;
+    await store.settings.setBetaMatches(on);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(on
+            ? 'Beta comparison is on: it is shown in the editor of cards made with the beta template.'
+            : 'Beta comparison is off.'),
+      ),
+    );
+  }
+
   void _open(Widget screen) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
@@ -90,10 +103,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (value == 'select') _controller.startSelecting();
                         if (value == 'backup') showBackupSheet(context);
                         if (value == 'info') showAppInfoDialog(context, store.settings);
+                        if (value == 'beta') _toggleBetaMatches();
                       },
                       itemBuilder: (_) => [
                         if (all.isNotEmpty)
                           const PopupMenuItem(value: 'select', child: Text('Select cards')),
+                        CheckedPopupMenuItem(
+                          value: 'beta',
+                          checked: store.settings.betaMatchesEnabled,
+                          child: const Text('Compare with beta cards'),
+                        ),
                         const PopupMenuItem(value: 'backup', child: Text('Backup and restore')),
                         const PopupMenuItem(value: 'info', child: Text('Version and updates')),
                       ],
