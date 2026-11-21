@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Builds assets/data/beta_cards.json (reference cards of the beta game) from the CSV
-table made from the user's screenshots. Run: python tool/make_beta_cards_json.py master.csv out.json"""
+table made from the user's screenshots. Run: python tool/make_beta_cards_json.py master.csv out.json
+By default the upgraded copies of a car are dropped (see drop_upgraded); add --keep-upgraded to keep every card."""
 import csv, json, re, sys
 def pretty(n): return re.sub(r'\s+',' ',n.replace('_',' ')).strip()
 def cls(r):
@@ -26,6 +27,52 @@ FIX={(217,2.1):('Audi R8 Coupe V10 Plus',2015,'DE'),(174,4.5):('Mercedes-AMG SLK
  (155,5.0):('Mercedes-AMG SLK 32',2004,'DE'),(178,3.1):('Audi RS6 Avant',2013,'DE'),
  (174,4.4):('Audi RS6 Plus',2004,'DE'),(208,2.5):('Audi R8 Coupe V10 Plus',2015,'DE')}
 src,dst=sys.argv[1],sys.argv[2]
+keep_upgraded='--keep-upgraded' in sys.argv[3:]
+
+def hidden_grip(e):
+    return 100.0 if 'gh' in e else e.get('g')
+def stronger_by(a,b):
+    """How much stronger card a is than card b, in 'tolerance' units (the same ones the app's matcher uses:
+    8 mph, 0.4 s, 100 weight, 6 grip, 1.5 RQ). Above 0 means a is stronger. Every term is cut at +-3 so one
+    misread number (a grip of 41 on a V10) cannot decide alone."""
+    total=0.0; n=0
+    def term(x,y,tol,sign,weight=1.0):
+        nonlocal total,n
+        if x is None or y is None: return
+        total+=weight*max(-3.0,min(3.0,sign*(x-y)/tol)); n+=1
+    term(a.get('s'),b.get('s'),8,1)
+    term(a.get('z'),b.get('z'),0.4,-1)
+    term(a.get('w'),b.get('w'),100,-1)
+    term(hidden_grip(a),hidden_grip(b),6,1)
+    term(a.get('r'),b.get('r'),1.5,1,1.2)
+    return total if n else 0.0
+def drop_upgraded(cards):
+    """Cards that are the same car (same name and year) are the stock car and its upgraded versions. The weakest one
+    is the stock car and stays, the stronger ones go. A card without a year joins the car of its name when the name
+    has only one year. A card whose name is uncertain never counts as the stock car while a sure one exists
+    (it is usually a misread copy of that card). Cars of the same name but other years are different cars."""
+    by_name={}
+    for i,e in enumerate(cards):
+        name=e.get('n','').strip().lower()
+        if name: by_name.setdefault(name,[]).append(i)
+    drop=set(); report=[]
+    for name,idxs in by_name.items():
+        if len(idxs)<2: continue
+        years={cards[i]['y'] for i in idxs if 'y' in cards[i]}
+        buckets={}
+        for i in idxs:
+            y=cards[i].get('y')
+            if y is None:
+                if len(years)!=1: continue
+                y=next(iter(years))
+            buckets.setdefault(y,[]).append(i)
+        for y,b in buckets.items():
+            if len(b)<2: continue
+            cands=[i for i in b if 'q' not in cards[i]] or b
+            keep=min(cands,key=lambda i: sum(stronger_by(cards[i],cards[j]) for j in b if j!=i))
+            gone=[j for j in b if j!=keep]
+            drop.update(gone); report.append((name,y,keep,gone))
+    return [e for i,e in enumerate(cards) if i not in drop],report
 out=[]
 for r in csv.DictReader(open(src,encoding='utf-8-sig')):
     s,z,w=to_float(r['top_speed']),to_float(r['zero_60']),to_float(r['weight'])
@@ -46,5 +93,10 @@ for r in csv.DictReader(open(src,encoding='utf-8-sig')):
     if unsure: e['q']=1
     if hidden: e['gh']=1
     out.append({k:v for k,v in e.items() if v not in (None,'')})
+if not keep_upgraded:
+    before=out
+    out,report=drop_upgraded(out)
+    for name,y,keep,gone in report:
+        print(f'{name} {y}: kept',before[keep],'| removed',[before[j] for j in gone])
 json.dump(out,open(dst,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 print(len(out),'cards')
