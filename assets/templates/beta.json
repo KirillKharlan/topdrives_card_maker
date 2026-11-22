@@ -4,6 +4,7 @@
   "width": 1280,
   "height": 797,
   "cornerRadius": 0,
+  "uppercaseTitle": true,
   "textScale": 1.0,
   "photoBackground": "#2B2B2B",
   "frames": {

@@ -187,8 +187,8 @@ class CardView extends StatelessWidget {
 
                 // Brand keeps its size; the model fits itself into the rest of the line.
                 TitleText(
-                  brand: project.brand,
-                  model: project.model,
+                  brand: t.uppercaseTitle ? project.brand.toUpperCase() : project.brand,
+                  model: t.uppercaseTitle ? project.model.toUpperCase() : project.model,
                   style: t.titleStyle(project.cardStyle),
                   textScale: t.textScale,
                   brandScale: project.brandScale,

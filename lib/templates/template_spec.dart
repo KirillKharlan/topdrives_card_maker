@@ -397,6 +397,7 @@ class TemplateSpec {
     required this.flag,
     this.classColors = const {},
     this.fieldLabels = const {},
+    this.uppercaseTitle = false,
   });
 
   final String id, name;
@@ -426,6 +427,10 @@ class TemplateSpec {
   /// Names of fields in the editor when they differ from the usual ones
   /// (the beta template calls "handling" "Grip").
   final Map<String, String> fieldLabels;
+
+  /// The brand and the model are drawn in capitals (the beta game wrote the name that way).
+  /// The text typed in the editor and saved in the card stays as typed.
+  final bool uppercaseTitle;
 
   /// The template has a place for this field (not every template shows the tyres or the weight).
   bool hasField(String key) => fields.containsKey(key);
@@ -474,6 +479,7 @@ class TemplateSpec {
         for (final e in ((j['classColors'] as Map<String, dynamic>?) ?? const <String, dynamic>{}).entries)
           if (_color(e.value as String?) != null) e.key: _color(e.value as String?)!,
       },
+      uppercaseTitle: j['uppercaseTitle'] as bool? ?? false,
       fieldLabels: ((j['fieldLabels'] as Map<String, dynamic>?) ?? const <String, dynamic>{})
           .map((k, v) => MapEntry(k, v as String)),
       fields: (j['fields'] as Map<String, dynamic>)

@@ -274,6 +274,10 @@ claude/claude.md                 this file
   (13 dB even before correction), so only the logic is verified. To judge the fill properly we need ORIGINAL photos (not screenshots).
 - Known ceiling: PatchMatch re-arranges existing pixels, it cannot invent content; big extensions need a generative model (API) or an on-device model (LaMa).
 
+## Beta template: capital letters (not compiled)
+- `TemplateSpec.uppercaseTitle` (template json `uppercaseTitle`, true only in beta.json): `CardView` draws brand and model with `.toUpperCase()` (the beta game wrote names in capitals).
+  Only the drawing changes; the text fields and the saved card keep what was typed, so switching the template back shows the normal letters.
+
 ## Closest beta cards (not compiled)
 - Every match shows ALL numbers of the beta card (top speed, 0-60, weight, grip, RQ, year, drive), also those the person has not typed in yet (no difference then);
   only typed-in numbers are compared and counted in the distance. The big badge on the left is the RQ in the colour of its class.
