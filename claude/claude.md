@@ -280,7 +280,9 @@ claude/claude.md                 this file
   m_brakingDecelerationRate, m_handling, m_agility, m_hillAbility, m_groundClearance, m_tractionControl and m_ABS (Not set / Yes / No) and `tyreType`
   (list of `CarPhysics.tyreTypes` = TyreType values of TopDrives_Beta_Tyre_Data.csv: Drag, Formula, HiPerformance, Offroad, Slicks, StockCar, Tourism, Truck).
   Stored as the typed text in `CardProject.physics` (json key `physics`, left out while empty, so old cards and duplicates are unaffected); `toExport()` gives real types (numbers, bools, null for empty).
-- Editor: `PhysicsSection` (closed ExpansionTile at the bottom of `FieldsPanel`). The unit of every number is up to the person typing it, nothing is converted.
+- Editor: `PhysicsSection` (closed ExpansionTile at the bottom of `FieldsPanel`). NEVER put a `PageStorageKey` on that tile: TextFields inside read the tile's saved state (a bool) as scroll offset and
+  fail (release build showed huge grey boxes instead of fields); a plain `ValueKey` keeps its state in the ListView.
+- `CardMakerApp` wraps everything in `SafeArea(top: false)` (builder of MaterialApp) because Android draws edge to edge and the system buttons covered the bottom of the screens. The unit of every number is up to the person typing it, nothing is converted.
 - Export: `PhysicsExport` (lib/data/physics_export.dart): per car `<Brand_Model>.png` + `<Brand_Model>.json` ({card: {...as typed on the card}, physics: {...}}), and `cars.json`
   (the same for all cars in one list) when there is more than one car; the same car twice becomes `name_2`. Editor export sheet: "Share ZIP (card + physics data)";
   album / selection export: "Share ZIP (PNGs + physics data)". The way the fan build of the game unpacks it is not decided yet; the format is kept as plain as possible on purpose.

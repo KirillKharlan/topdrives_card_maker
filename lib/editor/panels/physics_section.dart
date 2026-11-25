@@ -63,7 +63,9 @@ class PhysicsSection extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        key: const PageStorageKey('physics-section'),
+        // Not a PageStorageKey: the text fields inside would read the tile's saved state
+        // (a bool) as their scroll position and fail, which showed up as grey boxes.
+        key: const ValueKey('physics-section'),
         title: Text('Physics (hidden stats)', style: Theme.of(context).textTheme.titleSmall),
         subtitle: Text(
           p.physics.isEmpty
