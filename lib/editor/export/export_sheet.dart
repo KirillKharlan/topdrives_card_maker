@@ -2,7 +2,10 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../data/physics_export.dart';
 import '../../video/video_exporter.dart';
 import '../editor_controller.dart';
 import 'card_exporter.dart';
@@ -135,6 +138,22 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
                 ),
               ),
             );
+
+        // The picture and the physics numbers of the card in one ZIP.
+        Future<void> deliverZip() async {
+          Navigator.pop(sheetContext);
+          final messenger = ScaffoldMessenger.of(context);
+          try {
+            final png = await cardPng();
+            final bytes = PhysicsExport.zip([PhysicsItem(project: c.project, png: png)]);
+            final dir = await getTemporaryDirectory();
+            final file = File('${dir.path}/${PhysicsExport.baseName(c.project)}.zip');
+            await file.writeAsBytes(bytes, flush: true);
+            await Share.shareXFiles([XFile(file.path)]);
+          } catch (e) {
+            messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
+          }
+        }
 
         Future<Uint8List> photoPng() => CardExporter.croppedPhoto(
               file: c.photoFile!,
@@ -269,6 +288,14 @@ Future<void> showExportSheet(BuildContext context, EditorController c) {
                   leading: const Icon(Icons.ios_share),
                   title: const Text('Share card'),
                   onTap: () => deliver(cardPng, share: true, suffix: ''),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.folder_zip_outlined),
+                  title: const Text('Share ZIP (card + physics data)'),
+                  subtitle: Text(c.project.physics.isEmpty
+                      ? 'The physics fields are empty'
+                      : '${c.project.physics.filled} physics fields filled in'),
+                  onTap: deliverZip,
                 ),
                 if (hasPhoto) ...[
                   const Divider(height: 1),

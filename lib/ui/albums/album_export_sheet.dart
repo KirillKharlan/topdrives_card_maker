@@ -6,11 +6,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../data/models/card_project.dart';
+import '../../data/physics_export.dart';
 import '../../data/repositories/app_store.dart';
 import '../../editor/export/album_exporter.dart';
 import '../../editor/export/card_exporter.dart';
 
-enum _Mode { gallery, share, collageGallery, collageShare }
+enum _Mode { gallery, share, collageGallery, collageShare, zip }
 
 /// Export many cards at once: separate PNGs (gallery or share) or one collage.
 Future<void> showAlbumExportSheet(
@@ -75,6 +76,13 @@ Future<void> showAlbumExportSheet(
                   title: const Text('Share collage'),
                   onTap: () => go(_Mode.collageShare),
                 ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.folder_zip_outlined),
+                  title: const Text('Share ZIP (PNGs + physics data)'),
+                  subtitle: const Text('One picture and one json per car, and cars.json with all of them'),
+                  onTap: () => go(_Mode.zip),
+                ),
               ],
             ),
           ),
@@ -134,6 +142,7 @@ Future<void> _run(
     final collage = mode == _Mode.collageGallery || mode == _Mode.collageShare;
     final pngs = <Uint8List>[];
     final files = <XFile>[];
+    final items = <PhysicsItem>[];
     final dir = await getTemporaryDirectory();
     var saved = 0;
     for (var i = 0; i < cards.length; i++) {
@@ -158,6 +167,8 @@ Future<void> _run(
         case _Mode.collageGallery:
         case _Mode.collageShare:
           pngs.add(png);
+        case _Mode.zip:
+          items.add(PhysicsItem(project: card, png: png));
       }
       saved++;
       progress.value = saved;
@@ -174,6 +185,11 @@ Future<void> _run(
         }
       case _Mode.share:
         if (files.isNotEmpty) await Share.shareXFiles(files);
+      case _Mode.zip:
+        if (items.isEmpty) return;
+        final file = File('${dir.path}/${_safe(name)}.zip');
+        await file.writeAsBytes(PhysicsExport.zip(items), flush: true);
+        await Share.shareXFiles([XFile(file.path)]);
       case _Mode.collageGallery:
       case _Mode.collageShare:
         if (pngs.isEmpty) return;

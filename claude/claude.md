@@ -274,6 +274,18 @@ claude/claude.md                 this file
   (13 dB even before correction), so only the logic is verified. To judge the fill properly we need ORIGINAL photos (not screenshots).
 - Known ceiling: PatchMatch re-arranges existing pixels, it cannot invent content; big extensions need a generative model (API) or an on-device model (LaMa).
 
+## Physics (hidden stats) and the ZIP (not compiled)
+- `lib/data/models/car_physics.dart`: `CarPhysics` = the hidden numbers of the game's race simulation, typed in by hand and independent of the card's own numbers
+  (the mass here is not the card's weight). Keys as in the game: m_horsepower, m_torque, m_mass, m_Cd, m_dragMultiplier, m_accelPoint1/2Time/Speed, m_timeToTopSpeed,
+  m_brakingDecelerationRate, m_handling, m_agility, m_hillAbility, m_groundClearance, m_tractionControl and m_ABS (Not set / Yes / No) and `tyreType`
+  (list of `CarPhysics.tyreTypes` = TyreType values of TopDrives_Beta_Tyre_Data.csv: Drag, Formula, HiPerformance, Offroad, Slicks, StockCar, Tourism, Truck).
+  Stored as the typed text in `CardProject.physics` (json key `physics`, left out while empty, so old cards and duplicates are unaffected); `toExport()` gives real types (numbers, bools, null for empty).
+- Editor: `PhysicsSection` (closed ExpansionTile at the bottom of `FieldsPanel`). The unit of every number is up to the person typing it, nothing is converted.
+- Export: `PhysicsExport` (lib/data/physics_export.dart): per car `<Brand_Model>.png` + `<Brand_Model>.json` ({card: {...as typed on the card}, physics: {...}}), and `cars.json`
+  (the same for all cars in one list) when there is more than one car; the same car twice becomes `name_2`. Editor export sheet: "Share ZIP (card + physics data)";
+  album / selection export: "Share ZIP (PNGs + physics data)". The way the fan build of the game unpacks it is not decided yet; the format is kept as plain as possible on purpose.
+- Tyre surfaces / friction values from the CSV (AsphaltDry ... Ice) are NOT used in the app; only the tyre type names are.
+
 ## Beta template: capital letters (not compiled)
 - `TemplateSpec.uppercaseTitle` (template json `uppercaseTitle`, true only in beta.json): `CardView` draws brand and model with `.toUpperCase()` (the beta game wrote names in capitals).
   Only the drawing changes; the text fields and the saved card keep what was typed, so switching the template back shows the normal letters.
@@ -285,15 +297,15 @@ claude/claude.md                 this file
   "Compare with beta cards" in the home screen's three-dot menu. `FieldsPanel` shows the section only when the template is beta AND the setting is on (it listens to settings too).
 - Beta template only: `BetaMatchesSection` (lib/editor/panels/beta_matches_section.dart, put in `FieldsPanel` right after `TextSection` when `project.templateId == 'beta'`)
   lists the 5 cards of the old beta game that are closest to the numbers typed in (top speed, 0-60, weight, grip, RQ, year, drive; needs at least 2 stats).
-- Data: `assets/data/beta_cards.json` (101 cards, registered in pubspec `assets/data/`), made by `tool/make_beta_cards_json.py` from `tool/beta_cards_source.csv`.
+- Data: `assets/data/beta_cards.json` (333 stock cars read card by card from the cards.zip screenshots, registered in pubspec `assets/data/`), made by `tool/make_beta_cards_json.py` from `tool/beta_cards_source.csv`.
   The CSV comes from the user's screenshots of the beta game (OCR with a digit classifier built from the game's own font), so it is incomplete and has errors:
   names that could not be read are empty (UI: "Name not read"), doubtful names carry `q` (UI: trailing "?"). Keys: n name, y year, c country, r rating (RQ, number in the lower left corner),
   s mph, z 0-60, w weight, d 4WD/RWD/FWD, g grip, gh = grip is 100 or more (the beta card shows only two digits, so only "100+" is known), cls class from the rating.
-- Only the STOCK version of a car is kept: `drop_upgraded()` in make_beta_cards_json.py (run with `--keep-upgraded` to keep all 111). Cards with the same name and year are
-  one car; the weakest one (sum of differences in tolerance units: speed 8, 0-60 0.4, weight 100, grip 6, RQ 1.2x1.5, each cut at +-3) stays, the stronger ones are dropped.
-  A card without a year joins the car if the name has one year only; an uncertain name (`q`) never wins against a sure one. Same name but another year = another car (kept).
-  Removed: R8 V10 Spyder x2, RS7 Sportback (misread copy), S1, M135i x2, G500 1994 (RQ9 copy), Vectra (junk read), R8 Coupe V10 Plus (217 mph one), S 63 (1840 kg one).
-  Unnamed cards (12) are never compared. Check by hand: G500 1994 kept without RQ, S 63 kept with grip 46.
+- The data is now 333 STOCK cars (every car once, no upgraded copies). Source: `tool/beta_cards_source.csv` (made from the 1280x764 screenshots of cards.zip with the
+  helpers in `tool/beta_ocr/`, names checked by eye). The class is taken from the badge colour (`COLOR_CLS` in make_beta_cards_json.py), not from RQ.
+  `drop_upgraded()` stays as a safety net (same name+year = same car, weakest stays; `--keep-upgraded` skips it); it removes nothing from the current data.
+  The older data (111 rows from battle frames, with upgraded copies and misread names) was replaced; the video frames (2400x1080) only repeated cars already in the set
+  or showed upgraded versions (SLS GT, P1, GT90), so they were not used.
 - Rating -> class colour, measured on the screenshots: D grey 3-5, C green 6-7, B blue 8-10, A purple 11-15, S yellow 16-19 (same colours as `classColors` in beta.json).
 - Algorithm (lib/data/beta_cards.dart, `BetaMatcher`): per value (difference / tolerance)^2, tolerances 8 mph, 0.4 s, 100 weight, 6 grip, 1.5 RQ, 4 years; weighted mean (RQ 1.2, year 0.5, others 1);
   +1.0 for another drive, +0.5 for another class when no RQ is typed. Closeness shown = exp(-distance / 2). A card with hidden grip matches any typed grip >= 100.

@@ -1,3 +1,4 @@
+import 'car_physics.dart';
 import 'card_style.dart';
 import 'card_tag.dart';
 import 'photo_fill.dart';
@@ -44,10 +45,12 @@ class CardProject {
     this.rq = '',
     this.prize = false,
     this.favorite = false,
+    CarPhysics? physics,
     this.prizeText = defaultPrizeText,
     List<CardTag>? tags,
     DateTime? updatedAt,
   })  : tags = tags ?? <CardTag>[],
+        physics = physics ?? CarPhysics(),
         updatedAt = updatedAt ?? DateTime.now();
 
   /// Longest clip of a video card and the one chosen for a new video.
@@ -124,6 +127,9 @@ class CardProject {
 
   /// Marked with the star; the Favorites album lists these cards.
   bool favorite;
+
+  /// The hidden numbers of the game's simulation, typed in by hand (exported in the ZIP).
+  CarPhysics physics;
   bool prize;
   String prizeText;
   /// Tags shown above the card, left to right (ready-made or custom).
@@ -184,6 +190,7 @@ class CardProject {
         'carClass': carClass,
         'rq': rq,
         'favorite': favorite,
+        if (physics.isNotEmpty) 'physics': physics.toJson(),
         'prize': prize,
         'prizeText': prizeText,
         'tags': tags.map((t) => t.toJson()).toList(),
@@ -243,6 +250,7 @@ class CardProject {
       carClass: s('carClass', 'B'),
       rq: s('rq', ''),
       favorite: j['favorite'] as bool? ?? false,
+      physics: CarPhysics.fromJson(j['physics'] as Map<String, dynamic>?),
       prize: (j['prize'] as bool?) ?? false,
       prizeText: s('prizeText', defaultPrizeText),
       tags: tags,

@@ -18,14 +18,9 @@ def year(s):
     if v is None: return None
     return v if v>=100 else (2000+v if v<=30 else 1900+v)
 # Names read directly from the screenshots (key: top speed, 0-60). They override the automatic guess.
-FIX={(217,2.1):('Audi R8 Coupe V10 Plus',2015,'DE'),(174,4.5):('Mercedes-AMG SLK Black',2007,'DE'),
- (155,5.8):('Mercedes-Benz E 500',1994,'DE'),(159,3.4):('Audi RS3 Sportback',2015,'DE'),
- (237,2.7):('Ford GT90',1995,'US'),(155,5.1):('Jaguar XF S',2016,'GB'),
- (140,5.6):('Volvo XC90 T8 Twin Engine',2016,'SE'),(195,3.9):('TVR Tuscan S',2005,'GB'),
- (155,4.3):('Mercedes-AMG S 63',2009,'DE'),(155,4.9):('BMW M135i',2016,'DE'),
- (155,5.5):('Audi S1',2014,'DE'),(138,7.3):('BMW 325i (E30)',1982,'DE'),
- (155,5.0):('Mercedes-AMG SLK 32',2004,'DE'),(178,3.1):('Audi RS6 Avant',2013,'DE'),
- (174,4.4):('Audi RS6 Plus',2004,'DE'),(208,2.5):('Audi R8 Coupe V10 Plus',2015,'DE')}
+# the colour of the RQ badge is the rarity of the card: it decides the class (an RQ 5 can be common (grey) or uncommon (green))
+COLOR_CLS={'серый':'D','зелёный':'C','синий':'B','фиолетовый':'A','жёлтый':'S'}
+FIX={}  # names were corrected by hand for the old, badly readable screenshots; the new stock screenshots (cards.zip) are read card by card, so nothing is overridden
 src,dst=sys.argv[1],sys.argv[2]
 keep_upgraded='--keep-upgraded' in sys.argv[3:]
 
@@ -89,7 +84,7 @@ for r in csv.DictReader(open(src,encoding='utf-8-sig')):
     if g is not None and g>130: g=None
     rating=to_int(r['rating'])
     d={'4':'4WD','R':'RWD','F':'FWD'}.get(r['drive'],'')
-    e={'n':name,'y':yr,'c':cn,'r':rating,'s':s,'z':z,'w':w,'d':d,'g':None if hidden else g,'cls':cls(rating)}
+    e={'n':name,'y':yr,'c':cn,'r':rating,'s':s,'z':z,'w':w,'d':d,'g':None if hidden else g,'cls':COLOR_CLS.get(r['rating_tier_color']) or cls(rating)}
     if unsure: e['q']=1
     if hidden: e['gh']=1
     out.append({k:v for k,v in e.items() if v not in (None,'')})

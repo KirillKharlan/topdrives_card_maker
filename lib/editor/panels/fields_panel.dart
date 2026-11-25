@@ -5,6 +5,7 @@ import 'beta_matches_section.dart';
 import 'extras_section.dart';
 import 'media_section.dart';
 import 'options_section.dart';
+import 'physics_section.dart';
 import 'size_section.dart';
 import 'text_section.dart';
 
@@ -30,6 +31,7 @@ class FieldsPanel extends StatelessWidget {
           SizeSection(controller: controller),
           OptionsSection(controller: controller),
           ExtrasSection(controller: controller),
+          PhysicsSection(controller: controller),
         ],
       ),
     );
