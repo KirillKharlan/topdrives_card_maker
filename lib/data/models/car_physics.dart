@@ -1,19 +1,30 @@
-/// How a field of [CarPhysics] is typed in: a number, a yes/no choice, or a tyre type from the list.
-enum PhysicsKind { number, flag, tyre }
+/// What a field of [CarPhysics] holds: a number (plain text field), a yes/no value or one of a
+/// few choices (both picked from a list). The kind also decides how the stored text is turned
+/// into json.
+enum PhysicsKind { number, flag, choice }
 
 class PhysicsField {
-  const PhysicsField(this.key, this.label, {this.kind = PhysicsKind.number, this.help = ''});
+  const PhysicsField(
+    this.key,
+    this.label, {
+    this.kind = PhysicsKind.number,
+    this.help = '',
+    this.options = const [],
+  });
 
   /// The name used in the game's files and in the exported json.
   final String key;
   final String label;
   final PhysicsKind kind;
   final String help;
+
+  /// The list to pick from ([PhysicsKind.choice] only).
+  final List<String> options;
 }
 
 /// The hidden numbers the game uses to simulate a race, typed in by hand. They are
 /// independent of the numbers shown on the card (the mass here is not the weight of the
-/// card). Everything is kept as the text that was typed, so an empty field stays empty.
+/// card). Everything is kept as text, so an empty field stays empty.
 class CarPhysics {
   CarPhysics([Map<String, String>? values]) : values = values ?? <String, String>{};
 
@@ -39,6 +50,9 @@ class CarPhysics {
     'Truck',
   ];
 
+  static const groundClearances = ['Low', 'Medium', 'High'];
+
+  /// Picked from a list: ground clearance, traction control, ABS, tyre type. The rest is typed.
   static const fields = <PhysicsField>[
     PhysicsField('m_horsepower', 'Engine power', help: 'm_horsepower'),
     PhysicsField('m_torque', 'Torque', help: 'm_torque'),
@@ -55,14 +69,16 @@ class CarPhysics {
     PhysicsField('m_handling', 'Handling', help: 'm_handling'),
     PhysicsField('m_agility', 'Agility', help: 'm_agility'),
     PhysicsField('m_hillAbility', 'Hill ability', help: 'm_hillAbility'),
-    PhysicsField('m_groundClearance', 'Ground clearance', help: 'm_groundClearance'),
+    PhysicsField('m_groundClearance', 'Ground clearance',
+        kind: PhysicsKind.choice, help: 'm_groundClearance', options: groundClearances),
     PhysicsField('m_tractionControl', 'Traction control',
         kind: PhysicsKind.flag, help: 'm_tractionControl'),
     PhysicsField('m_ABS', 'ABS', kind: PhysicsKind.flag, help: 'm_ABS'),
-    PhysicsField('tyreType', 'Tyre type', kind: PhysicsKind.tyre, help: 'tyreType'),
+    PhysicsField('tyreType', 'Tyre type',
+        kind: PhysicsKind.choice, help: 'tyreType', options: tyreTypes),
   ];
 
-  /// key -> typed text; a field that is empty is not in the map.
+  /// key -> stored text; a field that is empty is not in the map.
   final Map<String, String> values;
 
   String operator [](String key) => values[key] ?? '';
@@ -89,23 +105,38 @@ class CarPhysics {
     return v == v.roundToDouble() && v.abs() < 1e15 ? v.toInt() : v;
   }
 
-  /// Every field with its real type: numbers as numbers, yes/no as true/false, the tyre
-  /// type as text. A field that is empty (or a number field that is not a number) is null.
-  Map<String, dynamic> toExport() {
-    final out = <String, dynamic>{};
-    for (final f in fields) {
-      final text = this[f.key];
-      switch (f.kind) {
-        case PhysicsKind.number:
-          out[f.key] = text.isEmpty ? null : _number(text);
-        case PhysicsKind.flag:
-          out[f.key] = text == 'true' ? true : (text == 'false' ? false : null);
-        case PhysicsKind.tyre:
-          out[f.key] = text.isEmpty ? null : text;
-      }
-    }
-    return out;
+  static const _yes = {'true', 'yes', 'y', '1', 'on'};
+  static const _no = {'false', 'no', 'n', '0', 'off'};
+
+  /// A stored yes/no text as 'true', 'false' or '' (not set, or something else).
+  static String flagValue(String raw) {
+    final low = raw.trim().toLowerCase();
+    if (_yes.contains(low)) return 'true';
+    if (_no.contains(low)) return 'false';
+    return '';
   }
+
+  /// The stored text of a field with the type it looks like: a number field gives a number,
+  /// a yes/no field gives true / false, a choice stays text. Whatever does not fit stays as the
+  /// text that was typed (nothing is thrown away); an empty field is null.
+  static dynamic typed(PhysicsField f, String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+    switch (f.kind) {
+      case PhysicsKind.number:
+        return _number(text) ?? text;
+      case PhysicsKind.flag:
+        final flag = flagValue(text);
+        return flag.isEmpty ? text : flag == 'true';
+      case PhysicsKind.choice:
+        return text;
+    }
+  }
+
+  /// Every field with its type guessed from what was stored (see [typed]).
+  Map<String, dynamic> toExport() => {
+        for (final f in fields) f.key: typed(f, this[f.key]),
+      };
 
   Map<String, dynamic> toJson() => Map<String, dynamic>.from(values);
 }

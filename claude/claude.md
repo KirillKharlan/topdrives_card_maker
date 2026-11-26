@@ -277,9 +277,11 @@ claude/claude.md                 this file
 ## Physics (hidden stats) and the ZIP (not compiled)
 - `lib/data/models/car_physics.dart`: `CarPhysics` = the hidden numbers of the game's race simulation, typed in by hand and independent of the card's own numbers
   (the mass here is not the card's weight). Keys as in the game: m_horsepower, m_torque, m_mass, m_Cd, m_dragMultiplier, m_accelPoint1/2Time/Speed, m_timeToTopSpeed,
-  m_brakingDecelerationRate, m_handling, m_agility, m_hillAbility, m_groundClearance, m_tractionControl and m_ABS (Not set / Yes / No) and `tyreType`
-  (list of `CarPhysics.tyreTypes` = TyreType values of TopDrives_Beta_Tyre_Data.csv: Drag, Formula, HiPerformance, Offroad, Slicks, StockCar, Tourism, Truck).
-  Stored as the typed text in `CardProject.physics` (json key `physics`, left out while empty, so old cards and duplicates are unaffected); `toExport()` gives real types (numbers, bools, null for empty).
+  m_brakingDecelerationRate, m_handling, m_agility, m_hillAbility, m_groundClearance, m_tractionControl, m_ABS and `tyreType`.
+  Plain text fields, except four that are picked from a list: ground clearance (Low / Medium / High, kind `choice`, exported as that text), traction control and ABS (Not set / Yes / No, kind `flag`,
+  stored as 'true' / 'false'), tyre type (kind `choice`, `CarPhysics.tyreTypes` = TyreType values of TopDrives_Beta_Tyre_Data.csv: Drag, Formula, HiPerformance, Offroad, Slicks, StockCar, Tourism, Truck).
+  `CarPhysics.typed()` guesses the json type: number kind -> number (else the text), flag -> true/false (yes/no/1/0/on/off also read), choice -> text. A stored value that is not in a list
+  (typed in an older version) is added to the dropdown so it is not lost and not a crash (a DropdownButton needs its value among the items).
 - Editor: `PhysicsSection` (closed ExpansionTile at the bottom of `FieldsPanel`). NEVER put a `PageStorageKey` on that tile: TextFields inside read the tile's saved state (a bool) as scroll offset and
   fail (release build showed huge grey boxes instead of fields); a plain `ValueKey` keeps its state in the ListView.
 - `CardMakerApp` wraps everything in `SafeArea(top: false)` (builder of MaterialApp) because Android draws edge to edge and the system buttons covered the bottom of the screens. The unit of every number is up to the person typing it, nothing is converted.
