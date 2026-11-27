@@ -16,6 +16,7 @@ class SettingsRepository extends ChangeNotifier {
   final List<CardTag> _customTags = [];
   double _tyreNameOffset = 0;
   bool _betaMatches = false;
+  String _fillEngine = 'patchmatch';
 
   List<String> get customCountries => List.unmodifiable(_customCountries);
 
@@ -29,6 +30,18 @@ class SettingsRepository extends ChangeNotifier {
   /// Show "Closest in the beta game" in the editor of beta-template cards.
   /// Off until the person turns it on in the menu of the home screen.
   bool get betaMatchesEnabled => _betaMatches;
+
+  /// How the empty areas around a photo are filled: 'patchmatch' (fast, offline) or 'lama'
+  /// (neural network, needs the downloaded model).
+  String get fillEngine => _fillEngine;
+
+  Future<void> setFillEngine(String value) async {
+    if (value != 'patchmatch' && value != 'lama') return;
+    if (_fillEngine == value) return;
+    _fillEngine = value;
+    await _save();
+    notifyListeners();
+  }
 
   Future<void> setBetaMatches(bool value) async {
     if (_betaMatches == value) return;
@@ -54,6 +67,8 @@ class SettingsRepository extends ChangeNotifier {
       }
       final beta = data['betaMatches'];
       if (beta is bool) _betaMatches = beta;
+      final engine = data['fillEngine'];
+      if (engine == 'lama') _fillEngine = 'lama';
       final tags = data['customTags'];
       if (tags is List) {
         for (final e in tags) {
@@ -158,5 +173,6 @@ class SettingsRepository extends ChangeNotifier {
         'customTags': _customTags.map((t) => t.toJson()).toList(),
         'tyreNameOffset': _tyreNameOffset,
         'betaMatches': _betaMatches,
+        'fillEngine': _fillEngine,
       });
 }

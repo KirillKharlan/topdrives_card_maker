@@ -10,6 +10,7 @@ import '../data/models/photo_fill.dart';
 import '../data/models/photo_transform.dart';
 import '../data/repositories/app_store.dart';
 import '../photo_fill/fill_service.dart';
+import '../photo_fill/lama_model.dart';
 import '../templates/template_spec.dart';
 import '../video/video_frames.dart';
 import 'photo_move_mode.dart';
@@ -271,11 +272,23 @@ class EditorController extends ChangeNotifier {
     notifyListeners();
     try {
       final signature = project.fillSignatureNow;
+      var engine = FillEngine.patchMatch;
+      String? modelPath;
+      if (store.settings.fillEngine == 'lama') {
+        final model = await LamaModel.fileIfReady();
+        if (model == null) {
+          return 'The LaMa model is not downloaded yet. Press "Download model" or switch to the fast method.';
+        }
+        engine = FillEngine.lama;
+        modelPath = model.path;
+      }
       final outcome = await FillService.generate(
         photo: file,
         transform: project.photoTransform,
         cardWidth: template.width,
         cardHeight: template.height,
+        engine: engine,
+        lamaModelPath: modelPath,
       );
       final png = outcome.png;
       if (png == null) return outcome.message ?? 'Nothing was generated.';

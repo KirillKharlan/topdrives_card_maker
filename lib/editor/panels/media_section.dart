@@ -15,6 +15,7 @@ import '../../video/video_frames.dart';
 import '../canvas/logo_tile.dart';
 import '../editor_controller.dart';
 import '../photo_move_mode.dart';
+import 'fill_engine_row.dart';
 import 'section_card.dart';
 
 /// Car photo or video (library, gallery, remove, zoom, clip) and brand logo.
@@ -338,6 +339,8 @@ class MediaSection extends StatelessWidget {
                 ],
               ),
               if (p.photoFill == PhotoFill.smart && !p.hasVideo) ...[
+                const SizedBox(height: 4),
+                FillEngineRow(settings: controller.store.settings),
                 const SizedBox(height: 4),
                 Row(
                   children: [

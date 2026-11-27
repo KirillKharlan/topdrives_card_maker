@@ -8,8 +8,14 @@ import 'dart:ui' as ui;
 import '../data/models/photo_fill.dart';
 import '../data/models/photo_transform.dart';
 import '../editor/canvas/photo_painter.dart';
+import 'lama_fill.dart';
+import 'lama_runner.dart';
 import 'patch_match_fill.dart';
 import 'photo_decoder.dart';
+
+/// How the empty areas are built: [patchMatch] copies patches of the photo itself (fast, offline,
+/// no download), [lama] uses the LaMa neural network (needs its model file, see LamaModel).
+enum FillEngine { patchMatch, lama }
 
 class FillOutcome {
   const FillOutcome({this.png, this.message});
@@ -35,7 +41,18 @@ class FillService {
     required PhotoTransform transform,
     required double cardWidth,
     required double cardHeight,
+    FillEngine engine = FillEngine.patchMatch,
+    String? lamaModelPath,
   }) async {
+    if (engine == FillEngine.lama) {
+      return _generateLama(
+        photo: photo,
+        transform: transform,
+        cardWidth: cardWidth,
+        cardHeight: cardHeight,
+        modelPath: lamaModelPath,
+      );
+    }
     final image = await decodePhoto(photo);
     try {
       final fullW = cardWidth.round(), fullH = cardHeight.round();
@@ -64,6 +81,47 @@ class FillService {
           message: 'The photo is too small to take texture from. Make it a bit bigger and try again.',
         );
       }
+      return FillOutcome(png: await _encodePng(rgba, fullW, fullH));
+    } finally {
+      image.dispose();
+    }
+  }
+
+  /// The same job as [generate], with the LaMa model: it works on a 512 px copy of the card
+  /// (the card is mirrored into a square), the photo itself stays pixel for pixel.
+  static Future<FillOutcome> _generateLama({
+    required File photo,
+    required PhotoTransform transform,
+    required double cardWidth,
+    required double cardHeight,
+    required String? modelPath,
+  }) async {
+    if (modelPath == null || !await File(modelPath).exists()) {
+      return const FillOutcome(message: 'The LaMa model is not downloaded yet.');
+    }
+    final image = await decodePhoto(photo);
+    try {
+      final fullW = cardWidth.round(), fullH = cardHeight.round();
+      final scale = lamaSize / math.max(cardWidth, cardHeight);
+      final workW = math.max(1, math.min(lamaSize, (cardWidth * scale).round()));
+      final workH = math.max(1, math.min(lamaSize, (cardHeight * scale).round()));
+      final workRgba = await _renderPlaced(image, transform, cardWidth, cardHeight, workW, workH);
+      if (!_hasHole(workRgba)) {
+        return const FillOutcome(
+          message: 'The photo already covers the whole card, there is nothing to fill.',
+        );
+      }
+      final fullRgba = await _renderPlaced(image, transform, cardWidth, cardHeight, fullW, fullH);
+      final job = LamaJob(
+        modelPath: modelPath,
+        workWidth: workW,
+        workHeight: workH,
+        workRgba: workRgba,
+        fullWidth: fullW,
+        fullHeight: fullH,
+        fullRgba: fullRgba,
+      );
+      final rgba = await Isolate.run(() => runLamaFill(job));
       return FillOutcome(png: await _encodePng(rgba, fullW, fullH));
     } finally {
       image.dispose();

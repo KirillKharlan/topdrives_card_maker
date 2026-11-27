@@ -194,6 +194,19 @@ claude/claude.md                 this file
   API both work), restore extracts to card_maker_restore, renames old root to card_maker_before_restore, deletes it after success, then the UI calls `exit(0)`.
   `file_selector ^1.0.3` (+ `file_selector_android ^0.5.0`) picks the zip and the file is copied to a temp file first (file_picker 8.x failed the CI build: compileSdk 34 vs 36 required by flutter_plugin_android_lifecycle). Tests: test/collection_test.dart.
 
+## LaMa fill (not compiled, pipeline checked in Python)
+- Settings key `fillEngine` ('patchmatch' default | 'lama'), picker `FillEngineRow` (editor/panels/fill_engine_row.dart) above the Generate button of the smart fill. `EditorController.generateSmartFill` reads it; when
+  'lama' and the model is missing it answers with a message instead of silently falling back. `FillService.generate(engine:, lamaModelPath:)` -> `_generateLama`.
+- Model: big-lama exported by Carve (`Carve/LaMa-ONNX`, `lama_fp32.onnx`, Apache-2.0), 208 044 816 bytes, SHA-256 1faef530...68d6 (verified), fixed 512x512, inputs `image` (float, CHW, RGB 0..1) and
+  `mask` (float, 1 = fill), output `output` (float, CHW, 0..255). NOT in the APK: `LamaModel.download()` fetches it once (Hugging Face first, a byte-identical GitHub copy as fallback, checksum checked with
+  package:crypto), keeps it in `getApplicationSupportDirectory()/models/` (so it is not in the zip backup); `LamaModel.delete()` removes it.
+- `lama_fill.dart` (pure Dart, unit tests in test/lama_fill_test.dart): the card (long side 512, straight RGBA, alpha < 250 = no photo) is centred in a 512x512 square and the rest of the square is filled by
+  MIRRORING the card (`reflectIndex`), the empty mask is dilated by 2, hole pixels are black; after the model the card part is cropped, brought up to the card size (bilinear) and `lamaCompose` keeps the real
+  photo pixels, taking the model only in the empty area plus a 4 px feather inside the photo. `lama_runner.dart` runs onnxruntime_v2 (CPU, up to 4 threads) with SYNC `session.run` inside `Isolate.run`
+  (`runAsync` has a 5 s timeout) and releases everything. Python prototype (onnxruntime on CPU, same steps): about 5.7 s per card, trees and road continued well, no visible seam; a car cut by the photo edge is still smeared.
+- Costs: new dependencies `onnxruntime_v2: ^1.23.2+2` and `crypto: ^3.0.3` (pubspec), APK grows by the ONNX Runtime native libraries; the model needs about 1 GB of free RAM while it runs.
+- The new part is only 512 px sharp (upscaled to the card size), a bit softer than the photo.
+
 ## Known limitations / ideas
 - Sizes were calibrated against screenshots, partly on one phone; `textScale` is an estimate.
 - Content-aware fill takes a few seconds and can look streaky on asphalt.
@@ -255,7 +268,7 @@ claude/claude.md                 this file
 ## Tag colour picker
 - `lib/ui/common/color_wheel.dart`: `ColorWheelPicker` (hue = angle, saturation = radius, brightness bar; own code, no package) and `colourPalette`
   (42 ready colours). Used in `tag_editor_sheet.dart` next to the hex field; wheel, palette and hex stay in sync.
-## Ideas: AI photo extend (not built)
+## Ideas: AI photo extend (the on-device LaMa part is built, see the LaMa fill section; Stable Diffusion / API are still future)
 - Pixelcut API outpaint: 10 credits (= $0.10) per image, 100 free credits at signup, plans from $10/month (1000 credits, no rollover), up to 2000 px
   per side, best with small extensions and creativity 0.2-0.4. Docs say never embed the key in a mobile app (use a backend or each person's own key).
 
@@ -278,7 +291,8 @@ claude/claude.md                 this file
 - `lib/data/models/car_physics.dart`: `CarPhysics` = the hidden numbers of the game's race simulation, typed in by hand and independent of the card's own numbers
   (the mass here is not the card's weight). Keys as in the game: m_horsepower, m_torque, m_mass, m_Cd, m_dragMultiplier, m_accelPoint1/2Time/Speed, m_timeToTopSpeed,
   m_brakingDecelerationRate, m_handling, m_agility, m_hillAbility, m_groundClearance, m_tractionControl, m_ABS and `tyreType`.
-  Plain text fields, except four that are picked from a list: ground clearance (Low / Medium / High, kind `choice`, exported as that text), traction control and ABS (Not set / Yes / No, kind `flag`,
+  Plain text fields, except five that are picked from a list: braking (shown Good / Normal / Bad, STORED AND EXPORTED as the letters A / B / C = the brake class of the game, via `PhysicsField.labels`;
+  topdrivesrecords.com: A 3 stars ~4.0 s, B 2 stars ~4.9 s, C 1 star ~5.7 s for 100-0), ground clearance (Low / Medium / High, kind `choice`, exported as that text), traction control and ABS (Not set / Yes / No, kind `flag`,
   stored as 'true' / 'false'), tyre type (kind `choice`, `CarPhysics.tyreTypes` = TyreType values of TopDrives_Beta_Tyre_Data.csv: Drag, Formula, HiPerformance, Offroad, Slicks, StockCar, Tourism, Truck).
   `CarPhysics.typed()` guesses the json type: number kind -> number (else the text), flag -> true/false (yes/no/1/0/on/off also read), choice -> text. A stored value that is not in a list
   (typed in an older version) is added to the dropdown so it is not lost and not a crash (a DropdownButton needs its value among the items).
@@ -316,3 +330,10 @@ claude/claude.md                 this file
   Tests: test/beta_matches_test.dart. Not compiled; the algorithm was prototyped in Python first.
 - The zip of this iteration had `pubspec.yaml`, `pubspec.lock`, `README.md` filled with zero bytes (and a broken .git). pubspec.yaml and README.md were restored from loose git objects
   (README may lack the last ~500 bytes of edits), pubspec.lock was removed (CI runs `flutter pub get`).
+
+## FUTURE: a Stable Diffusion version of the background extension (not built, wanted by the owner)
+- LaMa only continues what is there (textures, trees, road); it cannot invent new content. A real generative extension (Stable Diffusion inpainting / outpainting, or a newer mobile diffusion model) should be added
+  later as a third fill method next to "Fast" and "LaMa" (`FillEngine` enum, `FillEngineRow`, `FillService`), same contract: card with the photo placed on it, alpha < 250 = empty, result = card sized RGBA, the real photo pixels kept.
+- Options researched: on-device Stable Diffusion needs 1-4 GB of model files and 5-15 s on a Snapdragon NPU (Qualcomm/MNN/QNN demos) or 20-60 s on ordinary phones; research models such as BlazeEdit (195M parameters,
+  about 0.3 s on a Pixel 10, May 2026) were not available as usable weights when checked; an API (for example Pixelcut, the user's own key, paid per image) is the other way. Check licences of the weights before using any.
+- Keep it optional and downloaded on demand like the LaMa model, and keep LaMa / the fast method as the offline fallback.
